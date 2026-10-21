@@ -1,0 +1,41 @@
+{
+  "services": [
+    {
+      "id": "wash-dry-fold-repeat",
+      "name": "Wash / Dry / Fold / Repeat",
+      "promoLabel": "Promo Rate",
+      "promoRate": 55,
+      "regularLabel": "Regular Rate",
+      "regularRate": 60,
+      "billingUnit": "unconfirmed"
+    },
+    {
+      "id": "wash-dry",
+      "name": "Wash / Dry",
+      "promoLabel": "Promo Rate",
+      "promoRate": 55,
+      "regularLabel": "Regular Rate",
+      "regularRate": 65,
+      "billingUnit": "unconfirmed"
+    },
+    {
+      "id": "drop-off",
+      "name": "Drop-off",
+      "promoLabel": "Shop sign rate",
+      "promoRate": null,
+      "regularLabel": "Shop sign rate",
+      "regularRate": 30,
+      "billingUnit": "unconfirmed"
+    }
+  ],
+  "express": {
+    "enabled": false,
+    "label": "Express option (demo; confirm with shop)",
+    "amount": 0,
+    "unit": "flat"
+  },
+  "weightLimits": {
+    "minimumKg": 0.1,
+    "maximumKg": 30
+  }
+}

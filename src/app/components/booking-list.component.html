@@ -1,0 +1,121 @@
+<section class="page-heading booking-list-heading">
+  <div>
+    <h1>Laundry queue</h1>
+    <p>Find a ticket and move its load along the washline.</p>
+  </div>
+  <button class="button button-primary" type="button" (click)="newBooking.emit()">New booking</button>
+</section>
+
+<section class="work-section booking-list-section" aria-label="Laundry bookings">
+  <div class="list-toolbar">
+    <label class="search-field">
+      <span class="sr-only">Search bookings by customer, phone or service</span>
+      <input [(ngModel)]="search" name="bookingSearch" type="search" placeholder="Search bookings" />
+    </label>
+    <span class="result-count" aria-live="polite">
+      {{ filteredBookings.length }} {{ filteredBookings.length === 1 ? 'ticket' : 'tickets' }}
+    </span>
+    <nav class="queue-filters" aria-label="Filter queue by wash stage">
+      <button type="button" class="queue-filter" [class.selected]="statusFilter === 'All'"
+        [attr.aria-pressed]="statusFilter === 'All'" (click)="statusFilter = 'All'">All <span>{{ bookings.length }}</span></button>
+      @for (status of statuses; track status) {
+        <button type="button" class="queue-filter" [class.selected]="statusFilter === status"
+          [attr.aria-pressed]="statusFilter === status" (click)="statusFilter = status">{{ status }} <span>{{ countAt(status) }}</span></button>
+      }
+    </nav>
+  </div>
+
+  @if (bookings.length && !hasPricedBookings) {
+    <p class="unit-note">Charge totals are hidden until the shop confirms whether its sign rates are per load or per kilogram.
+      <button type="button" (click)="openPricing.emit()">Review rate setup</button>
+    </p>
+  }
+
+  @if (filteredBookings.length) {
+    <div class="table-scroll">
+      <table class="booking-table full-booking-table" [class.priced]="hasPricedBookings">
+        <thead>
+          <tr>
+            <th scope="col">Customer</th>
+            <th scope="col">Laundry</th>
+            <th scope="col">Load &amp; pickup</th>
+            @if (hasPricedBookings) { <th scope="col" class="estimate-column">Estimate</th> }
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (booking of filteredBookings; track booking.id) {
+            <tr>
+              <td data-label="Customer" class="customer-cell">
+                <button
+                  type="button"
+                  class="customer-link"
+                  [attr.aria-label]="'View booking for ' + booking.customerName"
+                  (click)="selectBooking.emit(booking)"
+                >
+                  {{ booking.customerName }}
+                </button>
+                <small>{{ booking.contactNumber }}</small>
+              </td>
+              <td data-label="Laundry" class="service-cell">
+                <strong>{{ booking.charge.serviceName }}</strong>
+                <small>
+                  {{ booking.charge.rateLabel }} · ₱{{ booking.charge.rateAmount }} /
+                  {{ booking.charge.billingUnit === 'unconfirmed' ? 'unit to confirm' : booking.charge.billingUnit }}
+                  @if (booking.express) {
+                    <span class="express-indicator"> · Express</span>
+                  }
+                </small>
+              </td>
+              <td data-label="Load &amp; pickup" class="load-cell">
+                <strong>{{ booking.weightKg }} kg</strong>
+                <small>Pickup {{ booking.pickupDate | date: 'mediumDate' }}</small>
+              </td>
+              @if (hasPricedBookings) {
+                <td data-label="Estimate" class="estimate-cell estimate-column">
+                  @if (booking.charge.totalAmount !== null) {
+                    <strong>{{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong>
+                  } @else {
+                    <span class="muted">Unit pending</span>
+                  }
+                </td>
+              }
+              <td data-label="Status" class="status-cell">
+                <select
+                  class="status-control"
+                  [class.status-received]="booking.status === 'Received'"
+                  [class.status-washing]="booking.status === 'Washing'"
+                  [class.status-drying]="booking.status === 'Drying'"
+                  [class.status-ready]="booking.status === 'Ready for Pickup'"
+                  [class.status-completed]="booking.status === 'Completed'"
+                  [attr.aria-label]="'Change status for ' + booking.customerName"
+                  [ngModel]="booking.status"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="updateStatus(booking, $event)"
+                >
+                  @for (status of statuses; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="empty-state">
+      @if (bookings.length) {
+        <h2>No matching bookings</h2>
+        <p>Try another search or status.</p>
+        <button class="button button-secondary" type="button" (click)="search = ''; statusFilter = 'All'">
+          Clear filters
+        </button>
+      } @else {
+        <h2>No bookings yet</h2>
+        <p>Add the first laundry booking to start the queue.</p>
+        <button class="button button-secondary" type="button" (click)="newBooking.emit()">New booking</button>
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,109 @@
+<div class="dashboard-screen">
+  <header class="washline-heading">
+    <div>
+      <p class="shift-date">Today’s wash queue</p>
+      <h1>The washline</h1>
+      <p class="heading-copy">Every load, from the counter to pickup.</p>
+    </div>
+    <button class="button button-primary" type="button" (click)="newBooking.emit()">
+      New booking <span aria-hidden="true">＋</span>
+    </button>
+  </header>
+
+  @if (demoData) {
+    <p class="demo-note">Sample bookings for demonstration</p>
+  }
+
+  <section class="washline-panel" aria-labelledby="washline-title">
+    <div class="washline-intro">
+      <div>
+        <h2 id="washline-title">Loads in the shop</h2>
+        <p>{{ totalActiveLoads }} open · {{ readyCount }} ready for pickup</p>
+      </div>
+      <button class="text-button" type="button" (click)="showBookings.emit()">All bookings <span aria-hidden="true">→</span></button>
+    </div>
+    <ol class="washline-track">
+      @for (stage of washline; track stage.status; let last = $last) {
+        <li [class.stage-ready]="stage.status === 'Ready for Pickup'">
+          <span class="stage-count">{{ countAt(stage.status) }}</span>
+          <span class="stage-name">{{ stage.status }}</span>
+          <span class="stage-description">{{ stage.description }}</span>
+          @if (!last) { <span class="stage-connector" aria-hidden="true"></span> }
+        </li>
+      }
+    </ol>
+  </section>
+
+  <div class="overview-workspace">
+    <section class="intake-panel" aria-labelledby="intake-title">
+      <header class="panel-heading">
+        <div>
+          <h2 id="intake-title">Latest intake</h2>
+          <p>The most recently updated laundry tickets</p>
+        </div>
+        <span class="ticket-count">{{ recentBookings.length }} shown</span>
+      </header>
+
+      @if (recentBookings.length) {
+        <div class="ticket-list">
+          @for (booking of recentBookings; track booking.id) {
+            <button class="laundry-ticket" type="button" [class.priced]="booking.charge.totalAmount !== null" (click)="selectBooking.emit(booking)"
+              [attr.aria-label]="'Open laundry ticket for ' + booking.customerName">
+              <span class="ticket-customer">{{ booking.customerName }}</span>
+              <span class="ticket-service">{{ booking.charge.serviceName }} · {{ booking.weightKg }} kg</span>
+              <span class="ticket-pickup">Pickup {{ booking.pickupDate | date: 'MMM d' }}</span>
+              @if (booking.charge.totalAmount !== null) {
+                <span class="ticket-estimate">
+                  {{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}
+                </span>
+              }
+              <span class="status-chip"
+                [class.status-received]="booking.status === 'Received'"
+                [class.status-washing]="booking.status === 'Washing'"
+                [class.status-drying]="booking.status === 'Drying'"
+                [class.status-ready]="booking.status === 'Ready for Pickup'"
+                [class.status-completed]="booking.status === 'Completed'">{{ booking.status }}</span>
+            </button>
+          }
+        </div>
+        <button class="all-bookings-link" type="button" (click)="showBookings.emit()">Open booking list <span aria-hidden="true">→</span></button>
+      } @else {
+        <div class="queue-empty">
+          <h3>Nothing on the washline yet</h3>
+          <p>Add the first booking when a customer drops off laundry.</p>
+          <button class="button button-secondary" type="button" (click)="newBooking.emit()">Add first booking</button>
+        </div>
+      }
+    </section>
+
+    <aside class="rate-board" aria-labelledby="rate-board-title">
+      <div class="rate-board-topline"></div>
+      <header>
+        <p>Wash-up Wash-up</p>
+        <h2 id="rate-board-title">Shop rates</h2>
+        <span>Copied from the shop sign</span>
+      </header>
+      <div class="rate-list">
+        @for (service of pricing.services; track service.id) {
+          <article class="rate-entry">
+            <h3>{{ service.name }}</h3>
+            <div class="rate-pair">
+              @if (service.promoRate !== null) {
+                <p><span>{{ service.promoLabel }}</span><strong class="promo-price">{{ displayRate(service.promoRate) }}</strong></p>
+              }
+              <p><span>{{ service.regularLabel }}</span><strong class="regular-price">{{ displayRate(service.regularRate) }}</strong></p>
+            </div>
+          </article>
+        }
+      </div>
+      <p class="rate-footnote">Billing unit and promo terms need confirmation.</p>
+      <button type="button" class="rate-settings-link" (click)="showPricing.emit()">Edit rate setup <span aria-hidden="true">↗</span></button>
+    </aside>
+  </div>
+
+  @if (unpricedCompletedTodayCount) {
+    <p class="revenue-note">{{ unpricedCompletedTodayCount }} completed booking(s) today need a confirmed billing unit before revenue can be totaled.</p>
+  } @else if (todayRevenue > 0) {
+    <p class="revenue-note">Recorded today: <strong>{{ todayRevenue | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong></p>
+  }
+</div>

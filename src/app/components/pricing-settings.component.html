@@ -1,0 +1,106 @@
+<section class="page-heading">
+  <div>
+    <h1>Pricing setup</h1>
+    <p>Manage the rates and estimate settings used for bookings.</p>
+  </div>
+</section>
+
+<div class="notice notice-demo pricing-warning">
+  <strong>Confirm before charging.</strong>
+  <span>Keep billing units unconfirmed until the shop confirms them.</span>
+</div>
+
+<section class="pricing-section">
+  <div class="section-heading">
+    <h2>Service rates</h2>
+    <span class="settings-count">{{ draft.services.length }} services</span>
+  </div>
+
+  @for (service of draft.services; track service.id) {
+    <article class="pricing-row">
+      <label class="field">
+        <span>Service name</span>
+        <input [(ngModel)]="service.name" [name]="'name-' + service.id" required />
+      </label>
+      <label class="field">
+        <span>Promo label</span>
+        <input [(ngModel)]="service.promoLabel" [name]="'promo-label-' + service.id" [disabled]="service.promoRate === null" />
+      </label>
+      <label class="field">
+        <span>Promo rate (₱)</span>
+        <input [(ngModel)]="service.promoRate" [name]="'promo-rate-' + service.id" type="number" min="0" step="0.01" />
+      </label>
+      <label class="field">
+        <span>Regular label</span>
+        <input [(ngModel)]="service.regularLabel" [name]="'regular-label-' + service.id" required />
+      </label>
+      <label class="field">
+        <span>Regular rate (₱)</span>
+        <input [(ngModel)]="service.regularRate" [name]="'regular-rate-' + service.id" type="number" min="0" step="0.01" required />
+      </label>
+      <label class="field">
+        <span>Billing unit</span>
+        <select [(ngModel)]="service.billingUnit" [name]="'unit-' + service.id">
+          @for (unit of billingUnits; track unit.value) {
+            <option [value]="unit.value">{{ unit.label }}</option>
+          }
+        </select>
+      </label>
+    </article>
+  }
+</section>
+
+<section class="settings-grid">
+  <article class="settings-panel">
+    <h2>Express option</h2>
+    <p>Configure only after the shop confirms availability and fees.</p>
+    <label class="check-field settings-toggle">
+      <input [(ngModel)]="draft.express.enabled" name="expressEnabled" type="checkbox" />
+      <span>Enable express option on booking form</span>
+    </label>
+    <label class="field">
+      <span>Option label</span>
+      <input [(ngModel)]="draft.express.label" name="expressLabel" />
+    </label>
+    <div class="express-fields">
+      <label class="field">
+        <span>Express amount (₱)</span>
+        <input [(ngModel)]="draft.express.amount" name="expressAmount" type="number" min="0" step="0.01" />
+      </label>
+      <label class="field">
+        <span>Express billing basis</span>
+        <select [(ngModel)]="draft.express.unit" name="expressUnit">
+          <option value="flat">Flat amount</option>
+          <option value="per-kg">Per kilogram</option>
+          <option value="per-load">Per load</option>
+        </select>
+      </label>
+    </div>
+    <small class="field-hint">The surcharge is included in estimates only when enabled.</small>
+  </article>
+
+  <article class="settings-panel">
+    <h2>Weight validation limits</h2>
+    <p>Demo limits only; they are not confirmed shop policy.</p>
+    <div class="express-fields">
+      <label class="field">
+        <span>Minimum weight (kg)</span>
+        <input [(ngModel)]="draft.weightLimits.minimumKg" name="minimumKg" type="number" min="0.01" step="0.1" />
+      </label>
+      <label class="field">
+        <span>Maximum weight (kg)</span>
+        <input [(ngModel)]="draft.weightLimits.maximumKg" name="maximumKg" type="number" min="0.01" step="0.1" />
+      </label>
+    </div>
+    @if (draft.weightLimits.maximumKg < draft.weightLimits.minimumKg) {
+      <small class="field-error">Maximum weight must be at least the minimum weight.</small>
+    }
+  </article>
+</section>
+
+<div class="pricing-save-bottom">
+  <p>Saved through the local API.</p>
+  <button class="button button-primary" type="button" [disabled]="!valid || saving" (click)="save()">
+    {{ saving ? 'Saving…' : 'Save pricing' }}
+  </button>
+</div>

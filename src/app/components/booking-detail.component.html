@@ -1,0 +1,94 @@
+<div class="modal-backdrop">
+  <section class="dialog detail-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-detail-title">
+    <header class="dialog-header">
+      <div>
+        <h2 id="booking-detail-title">{{ booking.customerName }}</h2>
+        <p>{{ booking.contactNumber }}</p>
+      </div>
+      <button class="icon-button" type="button" aria-label="Close booking details" (click)="close.emit()">×</button>
+    </header>
+
+    <div class="detail-status">
+      @switch (booking.status) {
+        @case ('Received') { <span class="status-chip status-received">Received</span> }
+        @case ('Washing') { <span class="status-chip status-washing">Washing</span> }
+        @case ('Drying') { <span class="status-chip status-drying">Drying</span> }
+        @case ('Ready for Pickup') { <span class="status-chip status-ready">Ready for Pickup</span> }
+        @case ('Completed') { <span class="status-chip status-completed">Completed</span> }
+      }
+      <p>{{ statusDescription(booking.status) }}</p>
+    </div>
+
+    <dl class="detail-grid">
+      <div>
+        <dt>Laundry service</dt>
+        <dd>{{ booking.charge.serviceName }}</dd>
+      </div>
+      <div>
+        <dt>Selected rate</dt>
+        <dd>₱{{ booking.charge.rateAmount }} / {{ pricingUnitLabel }} · {{ booking.charge.rateLabel }}</dd>
+      </div>
+      <div>
+        <dt>Weight</dt>
+        <dd>{{ booking.weightKg }} kg</dd>
+      </div>
+      <div>
+        <dt>Express</dt>
+        <dd>{{ booking.express ? 'Selected' : 'Not selected' }}</dd>
+      </div>
+      <div>
+        <dt>Booking date</dt>
+        <dd>{{ booking.bookingDate | date: 'longDate' }}</dd>
+      </div>
+      <div>
+        <dt>Expected pickup</dt>
+        <dd>{{ booking.pickupDate | date: 'longDate' }}</dd>
+      </div>
+      <div>
+        <dt>Last updated</dt>
+        <dd>{{ booking.updatedAt | date: 'medium' }}</dd>
+      </div>
+    </dl>
+
+    <section class="detail-charge" aria-labelledby="detail-charge-title">
+      <h3 id="detail-charge-title">Charge estimate</h3>
+      <div>
+        <span>Service rate</span>
+        <span>₱{{ booking.charge.rateAmount }} / {{ pricingUnitLabel }}</span>
+      </div>
+      <div>
+        <span>Service amount</span>
+        <span>
+          {{ booking.charge.serviceAmount === null ? 'Not calculated' : (booking.charge.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}
+        </span>
+      </div>
+      @if (booking.charge.expressLabel) {
+        <div>
+          <span>{{ booking.charge.expressLabel }}</span>
+          <span>{{ booking.charge.expressAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</span>
+        </div>
+      }
+      <div class="detail-total">
+        <strong>Total estimate</strong>
+        <strong>
+          {{ booking.charge.totalAmount === null ? 'Unit unconfirmed' : (booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}
+        </strong>
+      </div>
+      <p>{{ booking.charge.explanation }}</p>
+    </section>
+
+    @if (booking.notes) {
+      <section class="detail-notes">
+        <h3>Staff notes</h3>
+        <p>{{ booking.notes }}</p>
+      </section>
+    }
+
+    <footer class="dialog-actions">
+      <button class="button button-danger" type="button" (click)="delete.emit(booking)">Delete booking</button>
+      <span class="dialog-actions-spacer"></span>
+      <button class="button button-secondary" type="button" (click)="close.emit()">Close</button>
+      <button class="button button-primary" type="button" (click)="edit.emit(booking)">Edit booking</button>
+    </footer>
+  </section>
+</div>

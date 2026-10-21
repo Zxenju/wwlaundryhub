@@ -1,0 +1,177 @@
+<div class="modal-backdrop">
+  <section class="dialog booking-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-form-title">
+    <header class="dialog-header">
+      <div>
+        <h2 id="booking-form-title">{{ booking ? 'Edit booking' : 'New booking' }}</h2>
+      </div>
+      <button class="icon-button" type="button" aria-label="Close booking form" (click)="cancel.emit()">×</button>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-layout">
+        <div class="form-content">
+          <section class="form-section" aria-labelledby="customer-section-title">
+            <h3 id="customer-section-title">Customer</h3>
+            <div class="form-grid">
+              <label class="field">
+                <span>Customer name <b aria-hidden="true">*</b></span>
+                <input formControlName="customerName" autocomplete="name" maxlength="70" placeholder="Customer name" required />
+                @if (form.controls.customerName.touched || submitted) {
+                  @if (form.controls.customerName.hasError('required')) {
+                    <small class="field-error">Enter the customer’s name.</small>
+                  } @else if (form.controls.customerName.hasError('nameLength') && form.controls.customerName.value.trim().length < 2) {
+                    <small class="field-error">Name must be at least 2 characters.</small>
+                  } @else if (form.controls.customerName.hasError('nameLength')) {
+                    <small class="field-error">Name must be 70 characters or fewer.</small>
+                  }
+                }
+              </label>
+
+              <label class="field">
+                <span>Contact number <b aria-hidden="true">*</b></span>
+                <input formControlName="contactNumber" autocomplete="tel" inputmode="tel" placeholder="e.g. 0917 123 4567" required />
+                @if ((form.controls.contactNumber.touched || submitted) && form.controls.contactNumber.invalid) {
+                  @if (form.controls.contactNumber.hasError('required')) {
+                    <small class="field-error">Enter a contact number.</small>
+                  } @else {
+                    <small class="field-error">Use a Philippine number, such as 09xx xxx xxxx or +63 9xx xxx xxxx.</small>
+                  }
+                }
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="laundry-section-title">
+            <h3 id="laundry-section-title">Service &amp; load</h3>
+            <div class="form-grid">
+              <label class="field">
+                <span>Service <b aria-hidden="true">*</b></span>
+                <select formControlName="serviceId" (change)="onServiceChange()" required>
+                  <option value="" disabled>Select service</option>
+                  @for (service of pricing.services; track service.id) {
+                    <option [value]="service.id">{{ service.name }}</option>
+                  }
+                </select>
+                @if ((form.controls.serviceId.touched || submitted) && form.controls.serviceId.hasError('required')) {
+                  <small class="field-error">Choose a service.</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>Rate type</span>
+                <select formControlName="rateType">
+                  @if (selectedService && selectedService.promoRate !== null) {
+                    <option value="promo">{{ selectedService.promoLabel }}</option>
+                  }
+                  <option value="regular">{{ selectedService?.regularLabel ?? 'Regular Rate' }}</option>
+                </select>
+                <small class="field-hint">Confirm promo terms with the shop.</small>
+              </label>
+
+              <label class="field">
+                <span>Weight (kg) <b aria-hidden="true">*</b></span>
+                <input
+                  formControlName="weightKg"
+                  type="number"
+                  [min]="pricing.weightLimits.minimumKg"
+                  [max]="pricing.weightLimits.maximumKg"
+                  step="0.1"
+                  inputmode="decimal"
+                  required
+                />
+                @if (form.controls.weightKg.touched || submitted) {
+                  @if (form.controls.weightKg.hasError('required')) {
+                    <small class="field-error">Enter the laundry weight.</small>
+                  } @else if (form.controls.weightKg.hasError('weightPositive')) {
+                    <small class="field-error">Weight must be greater than zero.</small>
+                  } @else if (form.controls.weightKg.hasError('weightRange')) {
+                    <small class="field-error">Use {{ pricing.weightLimits.minimumKg }}–{{ pricing.weightLimits.maximumKg }} kg. These are demo limits, not shop policy.</small>
+                  }
+                }
+              </label>
+
+              @if (pricing.express.enabled) {
+                <label class="check-field form-field-wide">
+                  <input formControlName="express" type="checkbox" />
+                  <span>{{ pricing.express.label }} — ₱{{ pricing.express.amount }} {{ pricing.express.unit }}</span>
+                </label>
+              } @else {
+                <p class="notice notice-inline form-field-wide">
+                  Express is unavailable until the shop confirms its service and fee.
+                </p>
+              }
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="timing-section-title">
+            <h3 id="timing-section-title">Dates &amp; notes</h3>
+            <div class="form-grid">
+              <label class="field">
+                <span>Booking date <b aria-hidden="true">*</b></span>
+                <input formControlName="bookingDate" type="date" [min]="today" required />
+                @if ((form.controls.bookingDate.touched || submitted) && form.controls.bookingDate.hasError('required')) {
+                  <small class="field-error">Choose the booking date.</small>
+                } @else if ((form.controls.bookingDate.touched || submitted) && form.controls.bookingDate.hasError('bookingDateInPast')) {
+                  <small class="field-error">Booking date cannot be in the past.</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>Expected pickup date <b aria-hidden="true">*</b></span>
+                <input formControlName="pickupDate" type="date" [min]="form.controls.bookingDate.value" required />
+                @if ((form.controls.pickupDate.touched || submitted) && form.controls.pickupDate.hasError('required')) {
+                  <small class="field-error">Choose an expected pickup date.</small>
+                } @else if ((form.controls.pickupDate.touched || submitted) && form.hasError('pickupBeforeBooking')) {
+                  <small class="field-error">Pickup must be on or after the booking date.</small>
+                }
+              </label>
+
+              <label class="field form-field-wide">
+                <span>Staff notes</span>
+                <textarea formControlName="notes" rows="3" maxlength="500" placeholder="Optional notes for staff"></textarea>
+                @if ((form.controls.notes.touched || submitted) && form.controls.notes.hasError('maxlength')) {
+                  <small class="field-error">Notes must be 500 characters or fewer.</small>
+                }
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <section class="estimate-box" aria-live="polite" aria-labelledby="estimate-title">
+          <div class="estimate-heading">
+            <div>
+              <h3 id="estimate-title">Charge estimate</h3>
+              <p>{{ estimate.serviceName }} · {{ selectedRateLabel }}</p>
+            </div>
+            @if (estimate.totalAmount !== null) {
+              <strong>{{ estimate.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong>
+            } @else {
+              <strong class="estimate-pending">Unit unconfirmed</strong>
+            }
+          </div>
+          @if (selectedRate !== null) {
+            <div class="estimate-line">
+              <span>{{ selectedRateLabel }}: ₱{{ selectedRate }} / {{ pricingService.unitLabel(estimate.billingUnit) }}</span>
+              <span>{{ estimate.serviceAmount === null ? 'Not calculated' : (estimate.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}</span>
+            </div>
+          }
+          @if (estimate.expressLabel) {
+            <div class="estimate-line">
+              <span>{{ estimate.expressLabel }}</span>
+              <span>{{ estimate.expressAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</span>
+            </div>
+          }
+          <p class="estimate-explanation">{{ estimate.explanation }}</p>
+          <small>Confirm the billing unit and promo terms before charging.</small>
+        </section>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="button button-secondary" type="button" (click)="cancel.emit()">Cancel</button>
+        <button class="button button-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Saving…' : booking ? 'Save changes' : 'Save booking' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

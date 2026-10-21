@@ -1,0 +1,128 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <aside class="sidebar" aria-label="Main navigation">
+    <a class="brand" href="/" aria-label="Wash-up Wash-up Laundry Hub" title="Wash-up Wash-up Laundry Hub" (click)="selectView('overview'); $event.preventDefault()">
+      <img src="/assets/wash-up-logo.jpg" alt="" width="54" height="54" />
+      <span>
+        <strong>Wash-up Wash-up</strong>
+        <small>Laundry Hub</small>
+      </span>
+    </a>
+
+    <nav class="nav-links" aria-label="Sections">
+      <button type="button" aria-label="Overview" title="Overview" [class.active]="view() === 'overview'" [attr.aria-current]="view() === 'overview' ? 'page' : null" (click)="selectView('overview')">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="nav-label">Overview</span>
+      </button>
+      <button type="button" aria-label="Bookings" title="Bookings" [class.active]="view() === 'bookings'" [attr.aria-current]="view() === 'bookings' ? 'page' : null" (click)="selectView('bookings')">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg></span>
+        <span class="nav-label">Bookings</span>
+      </button>
+      <button type="button" aria-label="Pricing" title="Pricing" [class.active]="view() === 'pricing'" [attr.aria-current]="view() === 'pricing' ? 'page' : null" (click)="selectView('pricing')">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 13 12.8 20.2a1.8 1.8 0 0 1-2.6 0L3.8 13.8a1.8 1.8 0 0 1 0-2.6L11 4h7.5A1.5 1.5 0 0 1 20 5.5Z"/><circle cx="15.5" cy="8.5" r="1"/></svg></span>
+        <span class="nav-label">Pricing</span>
+      </button>
+    </nav>
+
+    <button class="theme-toggle" type="button" (click)="toggleTheme()"
+      [attr.aria-pressed]="theme() === 'dark'"
+      [attr.aria-label]="theme() === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
+      [attr.title]="theme() === 'light' ? 'Switch to dark mode' : 'Switch to light mode'">
+      @if (theme() === 'light') {
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+        <span class="theme-label">Dark mode</span>
+      } @else {
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z"/></svg>
+        <span class="theme-label">Light mode</span>
+      }
+    </button>
+
+    <div class="sidebar-bottom">
+      <p>Open Daily</p>
+      <a href="tel:09458819148">0945-881-9148</a>
+      <span class="connection-state" [class.offline]="apiError()" [attr.aria-label]="apiError() ? 'API unavailable' : 'Local API connected'" [attr.title]="apiError() ? 'API unavailable' : 'Local API connected'">
+        <span aria-hidden="true"></span>{{ apiError() ? 'API unavailable' : 'Local API' }}
+      </span>
+    </div>
+  </aside>
+
+  <main class="main-area" id="main-content" tabindex="-1">
+    @if (apiError()) {
+      <div class="notice notice-error" role="alert">
+        <span>{{ apiError() }}</span>
+        <button type="button" (click)="loadData()">Retry</button>
+      </div>
+    }
+
+    @if (toast(); as message) {
+      <div class="toast" [class.toast-error]="toastError()" role="status">{{ message }}</div>
+    }
+
+    @if (loading()) {
+      <section class="loading-state" aria-label="Loading laundry dashboard" aria-live="polite">
+        <div class="loading-heading" aria-hidden="true"><span></span><span></span></div>
+        <div class="loading-stage" aria-hidden="true">
+          <span class="skeleton skeleton-title"></span>
+          <div class="loading-stage-row"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="loading-columns" aria-hidden="true">
+          <div class="loading-queue"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span></div>
+          <div class="loading-rates"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span></div>
+        </div>
+        <p>Loading today’s wash queue…</p>
+      </section>
+    } @else {
+      @switch (view()) {
+        @case ('overview') {
+          <app-dashboard
+            [bookings]="bookings()"
+            [demoData]="demoData()"
+            [pricing]="pricing()"
+            (showBookings)="selectView('bookings')"
+            (showPricing)="selectView('pricing')"
+            (newBooking)="openNewBooking()"
+            (selectBooking)="selectBooking($event)"
+          />
+        }
+        @case ('bookings') {
+          <app-booking-list
+            [bookings]="bookings()"
+            (editBooking)="editBooking($event)"
+            (selectBooking)="selectBooking($event)"
+            (changeStatus)="changeStatus($event)"
+            (deleteBooking)="deleteBooking($event)"
+            (newBooking)="openNewBooking()"
+            (openPricing)="selectView('pricing')"
+          />
+        }
+        @case ('pricing') {
+          <app-pricing-settings
+            [config]="pricing()"
+            [saving]="savingPricing()"
+            (saveConfig)="savePricing($event)"
+          />
+        }
+      }
+    }
+
+    @if (selectedBooking(); as booking) {
+      <app-booking-detail
+        [booking]="booking"
+        [pricing]="pricing()"
+        (close)="selectedBooking.set(null)"
+        (edit)="editBooking($event)"
+        (delete)="deleteBooking($event)"
+      />
+    }
+
+    @if (formOpen()) {
+      <app-booking-form
+        [booking]="editingBooking()"
+        [pricing]="pricing()"
+        [saving]="savingBooking()"
+        (saveBooking)="saveBooking($event)"
+        (cancel)="closeForm()"
+      />
+    }
+  </main>
+</div>
