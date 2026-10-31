@@ -56,9 +56,19 @@ The brief requires at least ten test cases and results. The following cases cove
 | 13 | Stop the API and reload the app, then restore the API. | Error and retry state appear; app recovers when API returns. | To run |
 | 14 | Leave Express disabled and attempt to select it. | Booking form does not offer it; API rejects an Express request if submitted directly. | To run |
 
-The repo includes unit tests for validators and price calculations. Run the project’s supported test command and capture the real output before writing test results into the PDF. Manual API and refresh checks above still need to be performed and recorded by the group.
+The repo includes unit tests for validators, price calculations, and app setup. Manual API, refresh, search, and failure-state checks above still need to be performed and recorded by the group.
 
-**Automated run on 31 October 2026:** `npm test -- --watch=false` reported 8 tests passing in two suites and one failed suite (`src/app/app.spec.ts`). Vitest could not open a generated temporary Angular test file under the Windows sandbox temp directory (`ENOENT`). Treat this as a failed verification, rerun the suite in the team’s normal development environment, and resolve or document the result before submission. The build succeeds, but the test requirement is not yet complete.
+**Automated run on 31 October 2026:** all 3 test files passed (10 tests). In this Windows environment, the default sandbox temp directory caused an `ENOENT` in `app.spec.ts`; redirecting `TEMP` and `TMP` to a writable project-local directory fixed it. To reproduce in PowerShell from `Laundry-Hub`:
+
+```powershell
+$testTemp = Join-Path (Get-Location) '.test-tmp'
+New-Item -ItemType Directory -Force -Path $testTemp | Out-Null
+$env:TEMP = $testTemp
+$env:TMP = $testTemp
+npm test -- --watch=false
+```
+
+The production build also completes. Record the manual results in the PDF; do not present the planned test matrix as already executed.
 
 ## PDF documentation outline
 
