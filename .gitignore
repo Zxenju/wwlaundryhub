@@ -29,6 +29,11 @@ yarn-error.log
 !.vscode/mcp.json
 .history/*
 
+# Local design tooling
+/.agents
+/.taste-skill
+/skills-lock.json
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
