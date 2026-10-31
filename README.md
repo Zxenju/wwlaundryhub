@@ -49,6 +49,11 @@ The shop sign shows Wash / Dry / Fold / Repeat at ₱55 promo and ₱60 regular,
 
 The business contact shown in the app is **0945-881-9148** and the supplied sign says **Open Daily**. The location pin is at 14.8019605, 120.9241976. No other opening hours, service terms, or customer details are inferred. Sample customer names and contact numbers are fictional.
 
+## Research and final submission
+
+- [Philippine express laundry research](./docs/research/philippine-laundry-express-service.md) records public shop examples and explains why the seeded Express option stays disabled until Wash-up confirms its own terms.
+- [Final project submission readiness](./docs/submission-readiness.md) maps the assignment requirements to the current project, lists the required PDF sections, and provides a test matrix for the group to run and record.
+
 ## Custom validators
 
 [`src/app/validators/booking.validators.ts`](./src/app/validators/booking.validators.ts) contains the Reactive Forms validators:

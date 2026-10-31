@@ -1,79 +1,101 @@
 <div class="dashboard-screen">
   <header class="washline-heading">
     <div>
-      <p class="shift-date">Today’s wash queue</p>
       <h1>The washline</h1>
-      <p class="heading-copy">Every load, from the counter to pickup.</p>
+      <div class="heading-meta">
+        <p class="heading-copy">Every load, from the counter to pickup.</p>
+        @if (demoData) { <span class="demo-note">Demo records</span> }
+      </div>
     </div>
     <button class="button button-primary" type="button" (click)="newBooking.emit()">
-      New booking <span aria-hidden="true">＋</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span>New booking</span>
     </button>
   </header>
 
-  @if (demoData) {
-    <p class="demo-note">Sample bookings for demonstration</p>
-  }
-
-  <section class="washline-panel" aria-labelledby="washline-title">
-    <div class="washline-intro">
-      <div>
-        <h2 id="washline-title">Loads in the shop</h2>
-        <p>{{ totalActiveLoads }} open · {{ readyCount }} ready for pickup</p>
-      </div>
-      <button class="text-button" type="button" (click)="showBookings.emit()">All bookings <span aria-hidden="true">→</span></button>
-    </div>
-    <ol class="washline-track">
-      @for (stage of washline; track stage.status; let last = $last) {
-        <li [class.stage-ready]="stage.status === 'Ready for Pickup'">
-          <span class="stage-count">{{ countAt(stage.status) }}</span>
-          <span class="stage-name">{{ stage.status }}</span>
-          <span class="stage-description">{{ stage.description }}</span>
-          @if (!last) { <span class="stage-connector" aria-hidden="true"></span> }
-        </li>
-      }
-    </ol>
-  </section>
-
   <div class="overview-workspace">
-    <section class="intake-panel" aria-labelledby="intake-title">
-      <header class="panel-heading">
-        <div>
-          <h2 id="intake-title">Latest intake</h2>
-          <p>The most recently updated laundry tickets</p>
-        </div>
-        <span class="ticket-count">{{ recentBookings.length }} shown</span>
+    <section class="station-board" aria-labelledby="station-board-title">
+      <header class="station-board-heading">
+        <h2 id="station-board-title">Laundry floor</h2>
+        <button class="text-button" type="button" (click)="showBookings.emit()">All bookings <span aria-hidden="true">→</span></button>
       </header>
 
-      @if (recentBookings.length) {
-        <div class="ticket-list">
-          @for (booking of recentBookings; track booking.id) {
-            <button class="laundry-ticket" type="button" [class.priced]="booking.charge.totalAmount !== null" (click)="selectBooking.emit(booking)"
-              [attr.aria-label]="'Open laundry ticket for ' + booking.customerName">
-              <span class="ticket-customer">{{ booking.customerName }}</span>
-              <span class="ticket-service">{{ booking.charge.serviceName }} · {{ booking.weightKg }} kg</span>
-              <span class="ticket-pickup">Pickup {{ booking.pickupDate | date: 'MMM d' }}</span>
-              @if (booking.charge.totalAmount !== null) {
-                <span class="ticket-estimate">
-                  {{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}
-                </span>
+      <div class="station-grid">
+        @for (station of stations; track station.status) {
+          <section class="laundry-station" [class.station-intake]="station.icon === 'intake'"
+            [class.station-washer]="station.icon === 'washer'"
+            [class.station-drying]="station.icon === 'drying'"
+            [class.station-pickup]="station.icon === 'pickup'"
+            [attr.aria-labelledby]="station.icon + '-station-title'">
+            <header class="station-heading">
+              <span class="station-icon" aria-hidden="true">
+                @switch (station.icon) {
+                  @case ('intake') {
+                    <svg viewBox="0 0 64 64"><path d="M8 36h48l-4 20H12L8 36Z"/><path d="m12 36 7-15 12 5 8-10 15 20M19 21l8-9 12 6-8 8M17 43v7m30-7v7"/></svg>
+                  }
+                  @case ('washer') {
+                    <svg viewBox="0 0 64 64"><rect x="8" y="5" width="48" height="54" rx="5"/><path d="M8 17h48M17 11h.1m8 0h.1"/><circle cx="32" cy="38" r="15"/><path d="M21 42c5-8 14-12 23-8M27 51c5 1 10-.5 14-4"/></svg>
+                  }
+                  @case ('drying') {
+                    <svg viewBox="0 0 64 64"><path d="M5 15h54M10 15l5 43m39-43-5 43M15 23h34"/><path d="m23 24 7-4 4 4 5-4 8 4-3 9-5-2v14H27V31l-6 2-3-9 5-4Z"/><circle cx="49" cy="9" r="5"/><path d="M49 1V0m8 9h2m-16 0h-2m14-6 2-2m-12 2-2-2"/></svg>
+                  }
+                  @case ('pickup') {
+                    <svg viewBox="0 0 64 64"><path d="M4 12h56M20 23v-4a4 4 0 1 0-4-4m4 8L7 34a3 3 0 0 0 2 5h22a3 3 0 0 0 2-5L20 23Zm25-1v-3a4 4 0 1 0-4-4m4 7L34 34a3 3 0 0 0 2 5h21a3 3 0 0 0 2-5L45 22Z"/></svg>
+                  }
+                }
+              </span>
+              <span class="station-label">
+                <h3 [id]="station.icon + '-station-title'">{{ station.title }}</h3>
+                <small>{{ station.description }}</small>
+              </span>
+              <span class="station-count" [attr.aria-label]="countAt(station.status) + ' bookings'">{{ countAt(station.status) }}</span>
+            </header>
+
+            @if (stationBookings(station.status).length) {
+              <div class="station-tickets" [class.pickup-tickets]="station.icon === 'pickup'" [class.paged-tickets]="countAt(station.status) > 3">
+                @for (booking of stationBookings(station.status); track booking.id) {
+                  <button class="station-ticket" type="button" (click)="selectBooking.emit(booking)"
+                    [attr.aria-label]="'Open ' + station.status + ' booking for ' + booking.customerName">
+                    <svg class="ticket-station-icon" [class.ticket-intake]="station.icon === 'intake'"
+                      [class.ticket-washer]="station.icon === 'washer'" [class.ticket-drying]="station.icon === 'drying'"
+                      [class.ticket-pickup]="station.icon === 'pickup'" viewBox="0 0 24 24" aria-hidden="true">
+                      @switch (station.icon) {
+                        @case ('intake') { <path d="M3 11h18l-2 9H5l-2-9Z"/><path d="m4 11 3-6 5 2 3-3 5 7M8 15v2m8-2v2"/> }
+                        @case ('washer') { <rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 7h16"/><circle cx="12" cy="14" r="4.5"/><path d="M9 15c1.5-2 4-3 6-2"/> }
+                        @case ('drying') { <path d="M3 5h18M6 5l1 16m11-16-1 16M7 10h10"/><path d="m10 11 2-1 2 1 2-1 2 2-2 2v5h-6v-5l-2-2 2-2Z"/> }
+                        @case ('pickup') { <path d="M3 5h18M12 10V8.5a2.5 2.5 0 1 0-2.5-2.5M12 10 4 16a1.7 1.7 0 0 0 1 3h14a1.7 1.7 0 0 0 1-3l-8-6Z"/> }
+                      }
+                    </svg>
+                    <span class="station-ticket-copy">
+                      <strong>{{ booking.customerName }}</strong>
+                      <span>{{ booking.charge.serviceName }} · {{ booking.weightKg }} kg</span>
+                      <small>Pickup {{ booking.pickupDate | date: 'MMM d' }}</small>
+                    </span>
+                  </button>
+                }
+              </div>
+              @if (countAt(station.status) > 3) {
+                <div class="station-pagination" [attr.aria-label]="'Pages of bookings at ' + station.title">
+                  <span>{{ currentPage(station.status) * 3 + 1 }}–{{ currentPage(station.status) * 3 + stationBookings(station.status).length }} of {{ countAt(station.status) }}</span>
+                  <div class="station-page-controls">
+                    <button class="station-page-button" type="button" aria-label="Previous page"
+                      [disabled]="currentPage(station.status) === 0" (click)="changePage(station.status, -1)">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 4-6 6 6 6"/></svg>
+                    </button>
+                    <span class="station-page-number">{{ currentPage(station.status) + 1 }} / {{ pageCount(station.status) }}</span>
+                    <button class="station-page-button" type="button" aria-label="Next page"
+                      [disabled]="currentPage(station.status) + 1 >= pageCount(station.status)" (click)="changePage(station.status, 1)">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 4 6 6-6 6"/></svg>
+                    </button>
+                  </div>
+                </div>
               }
-              <span class="status-chip"
-                [class.status-received]="booking.status === 'Received'"
-                [class.status-washing]="booking.status === 'Washing'"
-                [class.status-drying]="booking.status === 'Drying'"
-                [class.status-ready]="booking.status === 'Ready for Pickup'"
-                [class.status-completed]="booking.status === 'Completed'">{{ booking.status }}</span>
-            </button>
-          }
-        </div>
-        <button class="all-bookings-link" type="button" (click)="showBookings.emit()">Open booking list <span aria-hidden="true">→</span></button>
-      } @else {
-        <div class="queue-empty">
-          <h3>Nothing on the washline yet</h3>
-          <p>Add the first booking when a customer drops off laundry.</p>
-          <button class="button button-secondary" type="button" (click)="newBooking.emit()">Add first booking</button>
-        </div>
-      }
+            } @else {
+              <p class="station-empty">{{ stationEmptyCopy(station.status) }}</p>
+            }
+          </section>
+        }
+      </div>
     </section>
 
     <aside class="rate-board" aria-labelledby="rate-board-title">

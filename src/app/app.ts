@@ -28,6 +28,7 @@ export class App {
 
   protected readonly view = signal<MainView>('overview');
   protected readonly sidebarCollapsed = signal(true);
+  protected readonly mobileMenuOpen = signal(false);
   protected readonly theme = signal<Theme>('light');
   protected readonly bookings = signal<Booking[]>([]);
   protected readonly pricing = signal<PricingConfig>({
@@ -81,8 +82,17 @@ export class App {
 
   protected selectView(view: MainView): void {
     this.view.set(view);
+    this.mobileMenuOpen.set(false);
     this.selectedBooking.set(null);
     globalThis.window.scrollTo(0, 0);
+  }
+
+  protected toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  protected closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
   }
 
   protected loadData(showLoading = true): void {

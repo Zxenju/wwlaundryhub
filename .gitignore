@@ -1,3 +1,5 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
 # Compiled output
 /dist
 /tmp
@@ -17,6 +19,8 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
+
+# Visual Studio Code
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -24,11 +28,6 @@ yarn-error.log
 !.vscode/extensions.json
 !.vscode/mcp.json
 .history/*
-
-# Local design tooling
-/.agents
-/.taste-skill
-/skills-lock.json
 
 # Miscellaneous
 /.angular/cache

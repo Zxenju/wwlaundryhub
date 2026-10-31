@@ -1,44 +1,50 @@
 <section class="page-heading">
   <div>
     <h1>Pricing setup</h1>
-    <p>Manage the rates and estimate settings used for bookings.</p>
+    <p>Posted rates and estimate rules for the counter.</p>
   </div>
+  <button class="button button-primary" type="button" [disabled]="!valid || saving" (click)="save()">
+    {{ saving ? 'Saving…' : 'Save pricing' }}
+  </button>
 </section>
 
 <div class="notice notice-demo pricing-warning">
-  <strong>Confirm before charging.</strong>
-  <span>Keep billing units unconfirmed until the shop confirms them.</span>
+  <strong>Billing units and promo terms are unconfirmed. Verify them with the shop before charging.</strong>
 </div>
 
 <section class="pricing-section">
   <div class="section-heading">
-    <h2>Service rates</h2>
-    <span class="settings-count">{{ draft.services.length }} services</span>
+    <h2>Posted service rates</h2>
+    <span class="settings-count">{{ draft.services.length }} shop services</span>
   </div>
 
   @for (service of draft.services; track service.id) {
     <article class="pricing-row">
-      <label class="field">
-        <span>Service name</span>
+      <label class="field service-name-field">
+        <span>Service</span>
         <input [(ngModel)]="service.name" [name]="'name-' + service.id" required />
       </label>
-      <label class="field">
-        <span>Promo label</span>
-        <input [(ngModel)]="service.promoLabel" [name]="'promo-label-' + service.id" [disabled]="service.promoRate === null" />
-      </label>
-      <label class="field">
-        <span>Promo rate (₱)</span>
-        <input [(ngModel)]="service.promoRate" [name]="'promo-rate-' + service.id" type="number" min="0" step="0.01" />
-      </label>
-      <label class="field">
-        <span>Regular label</span>
-        <input [(ngModel)]="service.regularLabel" [name]="'regular-label-' + service.id" required />
-      </label>
-      <label class="field">
-        <span>Regular rate (₱)</span>
-        <input [(ngModel)]="service.regularRate" [name]="'regular-rate-' + service.id" type="number" min="0" step="0.01" required />
-      </label>
-      <label class="field">
+      <div class="rate-config promo-rate-config">
+        <label class="field">
+          <span>Promotion label</span>
+          <input [(ngModel)]="service.promoLabel" [name]="'promo-label-' + service.id" [disabled]="service.promoRate === null" />
+        </label>
+        <label class="field">
+          <span>Promo rate</span>
+          <span class="money-input"><span aria-hidden="true">₱</span><input [(ngModel)]="service.promoRate" [name]="'promo-rate-' + service.id" type="number" min="0" step="0.01" /></span>
+        </label>
+      </div>
+      <div class="rate-config regular-rate-config">
+        <label class="field">
+          <span>Regular label</span>
+          <input [(ngModel)]="service.regularLabel" [name]="'regular-label-' + service.id" required />
+        </label>
+        <label class="field">
+          <span>Regular rate</span>
+          <span class="money-input"><span aria-hidden="true">₱</span><input [(ngModel)]="service.regularRate" [name]="'regular-rate-' + service.id" type="number" min="0" step="0.01" required /></span>
+        </label>
+      </div>
+      <label class="field billing-unit-field">
         <span>Billing unit</span>
         <select [(ngModel)]="service.billingUnit" [name]="'unit-' + service.id">
           @for (unit of billingUnits; track unit.value) {
@@ -53,7 +59,7 @@
 <section class="settings-grid">
   <article class="settings-panel">
     <h2>Express option</h2>
-    <p>Configure only after the shop confirms availability and fees.</p>
+    <p>Philippine shops use different rush fees and turnaround promises. The Wash-up sign does not confirm Express service, so leave this off until the shop confirms its terms.</p>
     <label class="check-field settings-toggle">
       <input [(ngModel)]="draft.express.enabled" name="expressEnabled" type="checkbox" />
       <span>Enable express option on booking form</span>
@@ -98,9 +104,3 @@
   </article>
 </section>
 
-<div class="pricing-save-bottom">
-  <p>Saved through the local API.</p>
-  <button class="button button-primary" type="button" [disabled]="!valid || saving" (click)="save()">
-    {{ saving ? 'Saving…' : 'Save pricing' }}
-  </button>
-</div>
