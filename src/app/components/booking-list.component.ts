@@ -11,6 +11,7 @@ import { Booking, BookingStatus } from '../models/booking';
 })
 export class BookingListComponent {
   @Input({ required: true }) bookings: Booking[] = [];
+  @Input() washRippleBookingId: string | null = null;
   @Output() editBooking = new EventEmitter<Booking>();
   @Output() selectBooking = new EventEmitter<Booking>();
   @Output() changeStatus = new EventEmitter<{ booking: Booking; status: BookingStatus }>();

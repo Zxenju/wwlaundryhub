@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Booking, BookingDraft, BookingListResponse, PricingConfig } from '../models/booking';
+import { Booking, BookingDraft, BookingListResponse, PaymentMethod, PricingConfig } from '../models/booking';
 
 @Injectable({ providedIn: 'root' })
 export class BookingApiService {
@@ -18,6 +18,10 @@ export class BookingApiService {
 
   updateBooking(id: string, draft: BookingDraft): Observable<Booking> {
     return this.http.put<Booking>(`${this.apiUrl}/bookings/${encodeURIComponent(id)}`, draft);
+  }
+
+  updatePayment(id: string, payment: { paid: boolean; method?: PaymentMethod }): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.apiUrl}/bookings/${encodeURIComponent(id)}/payment`, payment);
   }
 
   deleteBooking(id: string): Observable<void> {

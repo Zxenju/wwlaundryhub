@@ -1,3 +1,31 @@
-:host {
-  display: block;
+:host { display: block; }
+
+.page-heading { align-items: center; }
+.page-heading h1 { letter-spacing: -.035em; }
+.pricing-section { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.pricing-section > .section-heading { min-height: 54px; margin: 0; padding: 12px 17px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface-blue) 40%, var(--surface)); }
+.pricing-section .section-heading h2 { font-size: 16px; }
+.settings-count { font-size: 12px; }
+.pricing-row { padding: 16px 17px; border-top: 1px solid var(--line); }
+.pricing-row:first-of-type { border-top: 0; }
+.pricing-row .field > span,.settings-panel .field > span { font-size: 11px; letter-spacing: .015em; }
+.pricing-row .field input,.pricing-row .field select,.settings-panel .field input,.settings-panel .field select { min-height: 40px; }
+.money-input { min-height: 40px; }
+.pricing-row .money-input input { min-height: 38px; }
+.settings-grid { gap: 16px; }
+.settings-panel { border-radius: var(--radius-md); padding: 18px 19px; }
+.settings-panel h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 19px; letter-spacing: -.02em; }
+.settings-grid .field { margin-top: 12px; }
+.settings-toggle { padding: 9px 0; }
+
+@media (max-width: 850px) {
+  .pricing-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 560px) {
+  .pricing-section { border-radius: var(--radius-md); }
+  .pricing-section > .section-heading { padding-inline: 12px; }
+  .pricing-row { grid-template-columns: 1fr; gap: 11px; padding: 14px 12px; }
+  .pricing-row .rate-config { grid-column: 1; }
+  .settings-panel { padding: 16px 14px; }
 }

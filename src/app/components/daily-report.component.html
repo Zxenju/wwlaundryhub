@@ -1,0 +1,226 @@
+<section class="page-heading report-heading">
+  <div>
+    <h1>Reports &amp; analytics</h1>
+    <p>{{ dateLabel | date: 'EEEE, MMMM d, y' }}</p>
+  </div>
+  <div class="report-actions">
+    <button class="button button-secondary" type="button" (click)="showBookings.emit()">All bookings</button>
+    <button class="button button-primary" type="button" (click)="printReport()">Print report</button>
+  </div>
+</section>
+
+<section class="report-summary" aria-label="Today's workload summary">
+  <article class="report-stat">
+    <span>Pickups due today</span>
+    <strong>{{ pickupsDueToday.length }}</strong>
+  </article>
+  <article class="report-stat">
+    <span>Ready for collection</span>
+    <strong>{{ readyForPickup.length }}</strong>
+  </article>
+  <article class="report-stat">
+    <span>Loads in process</span>
+    <strong>{{ activeWork.length }}</strong>
+  </article>
+  <article class="report-stat report-stat-overdue">
+    <span>Past pickup date</span>
+    <strong>{{ overduePickups }}</strong>
+  </article>
+</section>
+
+<section class="analytics-section" aria-labelledby="analytics-title">
+  <header class="analytics-heading">
+    <div>
+      <h2 id="analytics-title">Booking performance</h2>
+      <p>Bookings are grouped by booking date. Charge totals are estimates, not collected payments.</p>
+    </div>
+    <div class="analytics-controls">
+      <button class="button button-secondary export-button" type="button" [disabled]="!validReportRange" (click)="exportCsv()">Export CSV</button>
+      <label>
+        <span>Period</span>
+        <select [(ngModel)]="rangeChoice" name="reportPeriod">
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="month">This month</option>
+          <option value="all">All bookings</option>
+          <option value="custom">Custom dates</option>
+        </select>
+      </label>
+      @if (rangeChoice === 'custom') {
+        <label>
+          <span>From</span>
+          <input type="date" [(ngModel)]="customStart" name="reportStart" [max]="today" />
+        </label>
+        <label>
+          <span>To</span>
+          <input type="date" [(ngModel)]="customEnd" name="reportEnd" [max]="today" />
+        </label>
+      }
+    </div>
+  </header>
+
+  <p class="analytics-period" aria-live="polite">
+    {{ reportRangeStart | date: 'mediumDate' }} – {{ reportRangeEnd | date: 'mediumDate' }}
+  </p>
+
+  <div class="analytics-summary" aria-label="Booking and payment period totals">
+    <div class="analytics-total"><span>Bookings</span><strong>{{ reportBookings.length }}</strong></div>
+    <div class="analytics-total"><span>Laundry weight</span><strong>{{ reportWeightKg | number: '1.1-2' }} <small>kg</small></strong></div>
+    <div class="analytics-total"><span>Estimated charges</span><strong>{{ estimatedCharges | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong><small>{{ bookingsWithEstimate }} of {{ reportBookings.length }} priced</small></div>
+    <div class="analytics-total"><span>Payments collected</span><strong>{{ collectedInPeriod | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong><small>{{ paymentsInPeriod.length }} payments in selected period</small></div>
+  </div>
+
+  @if (reportBookings.length) {
+    <section class="trend-section" aria-labelledby="trend-title">
+      <header class="analytics-subheading">
+        <div>
+          <h3 id="trend-title">Booking trends</h3>
+          <p>{{ trendWindowLabel }} · {{ trendGrouping === 'day' ? 'daily' : trendGrouping === 'week' ? 'weekly' : 'monthly' }} totals</p>
+        </div>
+      </header>
+      <div class="trend-grid">
+        <section class="trend-chart" aria-labelledby="booking-trend-title">
+          <h4 id="booking-trend-title">Bookings</h4>
+          <div class="trend-bars booking-bars" role="img" [attr.aria-label]="'Booking count trend: ' + trendPoints.length + ' time periods'">
+            @for (point of trendPoints; track point.start) {
+              <div class="trend-column" [attr.title]="point.label + ': ' + point.bookings + ' bookings'">
+                <span class="trend-value">{{ point.bookings }}</span>
+                <span class="trend-bar-track"><span class="trend-bar" [style.height.%]="point.bookings / maxTrendBookings * 100"></span></span>
+                <span class="trend-label">{{ point.label }}</span>
+              </div>
+            }
+          </div>
+        </section>
+        <section class="trend-chart" aria-labelledby="collection-trend-title">
+          <h4 id="collection-trend-title">Payments collected</h4>
+          <div class="trend-bars collection-bars" role="img" [attr.aria-label]="'Payments collected trend: ' + trendPoints.length + ' time periods'">
+            @for (point of trendPoints; track point.start) {
+              <div class="trend-column" [attr.title]="point.label + ': ' + (point.collections | currency: 'PHP' : 'symbol' : '1.2-2')">
+                <span class="trend-value">{{ point.collections | currency: 'PHP' : 'symbol' : '1.0-0' }}</span>
+                <span class="trend-bar-track"><span class="trend-bar" [style.height.%]="point.collections / maxTrendCollections * 100"></span></span>
+                <span class="trend-label">{{ point.label }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div class="analytics-breakdowns">
+      <section class="analytics-breakdown" aria-labelledby="status-breakdown-title">
+        <h3 id="status-breakdown-title">Current status</h3>
+        <p>Where bookings in this period are now</p>
+        <div class="status-breakdown">
+          @for (row of statusBreakdown; track row.status) {
+            <div class="status-row">
+              <span>{{ row.status }}</span>
+              <div class="status-track" role="img" [attr.aria-label]="row.count + ' bookings, ' + row.percent + ' percent'">
+                <span [style.width.%]="row.percent"></span>
+              </div>
+              <strong>{{ row.count }}</strong>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="analytics-breakdown" aria-labelledby="service-breakdown-title">
+        <h3 id="service-breakdown-title">Service mix</h3>
+        <p>Volume and estimated charges by service</p>
+        <div class="service-table-wrap">
+          <table class="service-table">
+            <thead><tr><th scope="col">Service</th><th scope="col">Loads</th><th scope="col">Weight</th><th scope="col">Est. charges</th></tr></thead>
+            <tbody>
+              @for (row of serviceBreakdown; track row.name) {
+                <tr>
+                  <th scope="row">{{ row.name }}</th>
+                  <td>{{ row.count }}</td>
+                  <td>{{ row.weightKg | number: '1.1-2' }} kg</td>
+                  <td>{{ row.charges | currency: 'PHP' : 'symbol' : '1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  } @else {
+    <p class="analytics-empty">{{ validReportRange ? 'No bookings in this date range. Choose another period to see its activity.' : 'Choose a start date on or before the end date.' }}</p>
+  }
+</section>
+
+<section class="report-section" aria-labelledby="station-load-title">
+  <header class="report-section-heading">
+    <div>
+      <h2 id="station-load-title">Work by station</h2>
+      <p>{{ activeWeightKg | number: '1.1-1' }} kg across active loads</p>
+    </div>
+  </header>
+  <div class="report-stations">
+    @for (status of workStatuses; track status) {
+      <article class="report-station">
+        <span>{{ status }}</span>
+        <strong>{{ countAt(status) }}</strong>
+        <small>{{ weightAt(status) | number: '1.1-1' }} kg</small>
+      </article>
+    }
+  </div>
+</section>
+
+<div class="report-lists">
+  <section class="report-section" aria-labelledby="pickup-due-title">
+    <header class="report-section-heading">
+      <div>
+        <h2 id="pickup-due-title">Expected today</h2>
+        <p>Bookings with today’s pickup date</p>
+      </div>
+      <span class="report-count">{{ pickupsDueToday.length }}</span>
+    </header>
+    @if (pickupsDueToday.length) {
+      <div class="report-bookings">
+        @for (booking of pickupsDueToday; track booking.id) {
+          <button class="report-booking" type="button" (click)="selectBooking.emit(booking)">
+            <span class="report-booking-main">
+              <strong>{{ booking.customerName }}</strong>
+              <small>{{ booking.charge.serviceName }} · {{ booking.weightKg | number: '1.0-2' }} kg</small>
+            </span>
+            <span class="status-chip" [class.status-received]="booking.status === 'Received'"
+              [class.status-washing]="booking.status === 'Washing'"
+              [class.status-drying]="booking.status === 'Drying'"
+              [class.status-ready]="booking.status === 'Ready for Pickup'">{{ booking.status }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <p class="report-empty">No pickups are scheduled for today.</p>
+    }
+  </section>
+
+  <section class="report-section" aria-labelledby="ready-pickup-title">
+    <header class="report-section-heading">
+      <div>
+        <h2 id="ready-pickup-title">Ready for collection</h2>
+        <p>Sorted by expected pickup date</p>
+      </div>
+      <span class="report-count">{{ readyForPickup.length }}</span>
+    </header>
+    @if (readyForPickup.length) {
+      <div class="report-bookings">
+        @for (booking of readyForPickup; track booking.id) {
+          <button class="report-booking" type="button" (click)="selectBooking.emit(booking)">
+            <span class="report-booking-main">
+              <strong>{{ booking.customerName }}</strong>
+              <small>{{ booking.charge.serviceName }} · {{ booking.weightKg | number: '1.0-2' }} kg · Pickup {{ booking.pickupDate | date: 'MMM d' }}</small>
+            </span>
+            @if (booking.pickupDate < today) {
+              <span class="status-chip status-drying">Overdue</span>
+            } @else {
+              <span class="status-chip status-ready">Ready</span>
+            }
+          </button>
+        }
+      </div>
+    } @else {
+      <p class="report-empty">No completed loads are waiting for pickup.</p>
+    }
+  </section>
+</div>

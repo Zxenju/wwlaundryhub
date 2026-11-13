@@ -1,14 +1,15 @@
 import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Booking, BookingDraft, BookingStatus, PricingConfig } from './models/booking';
+import { Booking, BookingDraft, BookingStatus, PaymentMethod, PricingConfig } from './models/booking';
 import { BookingApiService } from './services/booking-api.service';
 import { BookingDetailComponent } from './components/booking-detail.component';
 import { BookingFormComponent } from './components/booking-form.component';
 import { BookingListComponent } from './components/booking-list.component';
 import { DashboardComponent } from './components/dashboard.component';
+import { DailyReportComponent } from './components/daily-report.component';
 import { PricingSettingsComponent } from './components/pricing-settings.component';
 
-type MainView = 'overview' | 'bookings' | 'pricing';
+type MainView = 'overview' | 'bookings' | 'report' | 'pricing';
 type Theme = 'light' | 'dark';
 
 @Component({
@@ -17,6 +18,7 @@ type Theme = 'light' | 'dark';
     BookingFormComponent,
     BookingListComponent,
     DashboardComponent,
+    DailyReportComponent,
     PricingSettingsComponent,
   ],
   selector: 'app-root',
@@ -42,6 +44,7 @@ export class App {
   protected readonly formOpen = signal(false);
   protected readonly editingBooking = signal<Booking | null>(null);
   protected readonly selectedBooking = signal<Booking | null>(null);
+  protected readonly washRippleBookingId = signal<string | null>(null);
   protected readonly savingBooking = signal(false);
   protected readonly savingPricing = signal(false);
   protected readonly toast = signal('');
@@ -164,11 +167,32 @@ export class App {
   protected changeStatus(event: { booking: Booking; status: BookingStatus }): void {
     this.api.updateBooking(event.booking.id, { ...event.booking, status: event.status }).subscribe({
       next: () => {
+        if (event.status === 'Washing') this.showWashRipple(event.booking.id);
         this.notify('Booking status updated.');
         this.loadData(false);
       },
       error: (error: unknown) =>
         this.notify(this.errorMessage(error, 'Could not update the booking status.'), true),
+    });
+  }
+
+  private showWashRipple(bookingId: string): void {
+    this.washRippleBookingId.set(bookingId);
+    globalThis.setTimeout(() => {
+      if (this.washRippleBookingId() === bookingId) this.washRippleBookingId.set(null);
+    }, 280);
+  }
+
+  protected changePayment(event: { booking: Booking; paid: boolean; method?: PaymentMethod }): void {
+    if (!event.paid && !globalThis.confirm(`Remove the payment record for ${event.booking.customerName}?`)) return;
+    this.api.updatePayment(event.booking.id, { paid: event.paid, method: event.method }).subscribe({
+      next: (saved) => {
+        this.bookings.update((rows) => rows.map((booking) => booking.id === saved.id ? saved : booking));
+        this.selectedBooking.set(saved);
+        this.notify(event.paid ? 'Payment recorded.' : 'Booking marked unpaid.');
+      },
+      error: (error: unknown) =>
+        this.notify(this.errorMessage(error, 'Could not update payment status.'), true),
     });
   }
 

@@ -25,12 +25,6 @@
     </nav>
   </div>
 
-  @if (bookings.length && !hasPricedBookings) {
-    <p class="unit-note">Charge totals are hidden until the shop confirms whether its sign rates are per load or per kilogram.
-      <button type="button" (click)="openPricing.emit()">Review rate setup</button>
-    </p>
-  }
-
   @if (filteredBookings.length) {
     <div class="table-scroll">
       <table class="booking-table full-booking-table" [class.priced]="hasPricedBookings">
@@ -39,7 +33,7 @@
             <th scope="col">Customer</th>
             <th scope="col">Laundry</th>
             <th scope="col">Load &amp; pickup</th>
-            @if (hasPricedBookings) { <th scope="col" class="estimate-column">Estimate</th> }
+            @if (hasPricedBookings) { <th scope="col" class="estimate-column">Charge</th> }
             <th scope="col">Status</th>
           </tr>
         </thead>
@@ -61,7 +55,7 @@
                 <strong>{{ booking.charge.serviceName }}</strong>
                 <small>
                   {{ booking.charge.rateLabel }} · ₱{{ booking.charge.rateAmount }} /
-                  {{ booking.charge.billingUnit === 'unconfirmed' ? 'unit to confirm' : booking.charge.billingUnit }}
+                  {{ booking.charge.billingUnit === 'per-kg' ? 'kg' : booking.charge.billingUnit === 'per-load' ? 'load' : booking.charge.billingUnit }}
                   @if (booking.express) {
                     <span class="express-indicator"> · Express</span>
                   }
@@ -72,31 +66,36 @@
                 <small>Pickup {{ booking.pickupDate | date: 'mediumDate' }}</small>
               </td>
               @if (hasPricedBookings) {
-                <td data-label="Estimate" class="estimate-cell estimate-column">
+                <td data-label="Charge" class="estimate-cell estimate-column">
                   @if (booking.charge.totalAmount !== null) {
                     <strong>{{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong>
                   } @else {
-                    <span class="muted">Unit pending</span>
+                    <span class="muted">—</span>
                   }
                 </td>
               }
               <td data-label="Status" class="status-cell">
-                <select
-                  class="status-control"
-                  [class.status-received]="booking.status === 'Received'"
-                  [class.status-washing]="booking.status === 'Washing'"
-                  [class.status-drying]="booking.status === 'Drying'"
-                  [class.status-ready]="booking.status === 'Ready for Pickup'"
-                  [class.status-completed]="booking.status === 'Completed'"
-                  [attr.aria-label]="'Change status for ' + booking.customerName"
-                  [ngModel]="booking.status"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="updateStatus(booking, $event)"
-                >
-                  @for (status of statuses; track status) {
-                    <option [value]="status">{{ status }}</option>
+                <span class="status-control-wrap">
+                  <select
+                    class="status-control"
+                    [class.status-received]="booking.status === 'Received'"
+                    [class.status-washing]="booking.status === 'Washing'"
+                    [class.status-drying]="booking.status === 'Drying'"
+                    [class.status-ready]="booking.status === 'Ready for Pickup'"
+                    [class.status-completed]="booking.status === 'Completed'"
+                    [attr.aria-label]="'Change status for ' + booking.customerName"
+                    [ngModel]="booking.status"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="updateStatus(booking, $event)"
+                  >
+                    @for (status of statuses; track status) {
+                      <option [value]="status">{{ status }}</option>
+                    }
+                  </select>
+                  @if (washRippleBookingId === booking.id) {
+                    <span class="wash-ripple" aria-hidden="true"></span>
                   }
-                </select>
+                </span>
               </td>
             </tr>
           }

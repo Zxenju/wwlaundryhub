@@ -73,7 +73,7 @@
   align-items: center;
   padding: 9px 11px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--ink-soft);
   background: transparent;
   font-size: 14px;
@@ -213,7 +213,7 @@
   margin-top: auto;
   padding: 8px 11px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--ink-soft);
   background: var(--surface);
   font-size: 13px;
@@ -309,7 +309,7 @@
   margin: 0 8px 8px 0;
   padding: 30px clamp(22px, 3.2vw, 48px) 42px;
   border: 1px solid var(--sheet-edge);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
@@ -322,10 +322,10 @@
   .mobile-header .brand { flex: 1; justify-content: flex-start; min-width: 0; padding: 0; }
   .mobile-header .brand span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; }
   .mobile-header .brand img { width: 38px; height: 38px; }
-  .mobile-menu-toggle { width: 44px; height: 44px; display: grid; flex: 0 0 44px; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--surface); }
+  .mobile-menu-toggle { width: 44px; height: 44px; display: grid; flex: 0 0 44px; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink); background: var(--surface); }
   .mobile-menu-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .mobile-menu { display: grid; gap: 4px; padding: 8px 14px 12px; border-bottom: 1px solid var(--line); background: var(--frame); }
-  .mobile-menu-link { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 11px; border: 0; border-radius: 8px; color: var(--ink-soft); background: transparent; font-size: 14px; font-weight: 600; text-align: left; }
+  .mobile-menu-link { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 11px; border: 0; border-radius: var(--radius-sm); color: var(--ink-soft); background: transparent; font-size: 14px; font-weight: 600; text-align: left; }
   .mobile-menu-link.active { color: var(--accent-ink); background: var(--accent-soft); }
   .mobile-menu .mobile-theme-toggle,.sidebar-collapsed .mobile-menu .mobile-theme-toggle { width: 100%; min-height: 44px; justify-content: flex-start; margin: 5px 0 0; padding: 8px 11px; }
   .main-area { grid-column: auto; grid-row: auto; min-height: calc(100dvh - 68px); margin: 0; padding: 26px 22px 36px; border: 0; border-radius: 0; }

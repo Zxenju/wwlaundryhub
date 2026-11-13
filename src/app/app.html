@@ -1,4 +1,4 @@
-<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()" [class.receipt-mode]="!!selectedBooking()">
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="mobile-header">
     <a class="brand" href="/" aria-label="Wash-up Wash-up Laundry Hub" (click)="selectView('overview'); $event.preventDefault()">
@@ -23,6 +23,9 @@
       </button>
       <button class="mobile-menu-link" type="button" [class.active]="view() === 'bookings'" (click)="selectView('bookings')">
         <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg></span>Bookings
+      </button>
+      <button class="mobile-menu-link" type="button" [class.active]="view() === 'report'" (click)="selectView('report')">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4v13H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"/><path d="M14 3.5v4h4M8 12h8M8 16h5"/></svg></span>Reports
       </button>
       <button class="mobile-menu-link" type="button" [class.active]="view() === 'pricing'" (click)="selectView('pricing')">
         <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 13 12.8 20.2a1.8 1.8 0 0 1-2.6 0L3.8 13.8a1.8 1.8 0 0 1 0-2.6L11 4h7.5A1.5 1.5 0 0 1 20 5.5Z"/><circle cx="15.5" cy="8.5" r="1"/></svg></span>Pricing
@@ -56,6 +59,10 @@
       <button type="button" aria-label="Bookings" title="Bookings" [class.active]="view() === 'bookings'" [attr.aria-current]="view() === 'bookings' ? 'page' : null" (click)="selectView('bookings')">
         <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg></span>
         <span class="nav-label">Bookings</span>
+      </button>
+      <button type="button" aria-label="Reports" title="Reports" [class.active]="view() === 'report'" [attr.aria-current]="view() === 'report' ? 'page' : null" (click)="selectView('report')">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4v13H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"/><path d="M14 3.5v4h4M8 12h8M8 16h5"/></svg></span>
+        <span class="nav-label">Reports</span>
       </button>
       <button type="button" aria-label="Pricing" title="Pricing" [class.active]="view() === 'pricing'" [attr.aria-current]="view() === 'pricing' ? 'page' : null" (click)="selectView('pricing')">
         <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 13 12.8 20.2a1.8 1.8 0 0 1-2.6 0L3.8 13.8a1.8 1.8 0 0 1 0-2.6L11 4h7.5A1.5 1.5 0 0 1 20 5.5Z"/><circle cx="15.5" cy="8.5" r="1"/></svg></span>
@@ -128,6 +135,7 @@
         @case ('bookings') {
           <app-booking-list
             [bookings]="bookings()"
+            [washRippleBookingId]="washRippleBookingId()"
             (editBooking)="editBooking($event)"
             (selectBooking)="selectBooking($event)"
             (changeStatus)="changeStatus($event)"
@@ -143,6 +151,13 @@
             (saveConfig)="savePricing($event)"
           />
         }
+        @case ('report') {
+          <app-daily-report
+            [bookings]="bookings()"
+            (selectBooking)="selectBooking($event)"
+            (showBookings)="selectView('bookings')"
+          />
+        }
       }
     }
 
@@ -153,6 +168,7 @@
         (close)="selectedBooking.set(null)"
         (edit)="editBooking($event)"
         (delete)="deleteBooking($event)"
+        (changePayment)="changePayment($event)"
       />
     }
 

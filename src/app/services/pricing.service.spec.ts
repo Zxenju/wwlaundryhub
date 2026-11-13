@@ -10,7 +10,7 @@ const config: PricingConfig = {
     promoRate: 55,
     regularLabel: 'Regular Rate',
     regularRate: 60,
-    billingUnit: 'unconfirmed',
+    billingUnit: 'per-kg',
   }],
   express: {
     enabled: false,
@@ -29,19 +29,18 @@ describe('PricingService', () => {
     service = TestBed.inject(PricingService);
   });
 
-  it('does not calculate a total while the billing unit is unconfirmed', () => {
+  it('calculates a per-kilogram total from the entered weight', () => {
     const estimate = service.estimate(
       { serviceId: 'wash-fold', rateType: 'promo', weightKg: 2, express: false },
       config,
     );
     expect(estimate.rateAmount).toBe(55);
-    expect(estimate.billingUnit).toBe('unconfirmed');
-    expect(estimate.totalAmount).toBeNull();
+    expect(estimate.billingUnit).toBe('per-kg');
+    expect(estimate.totalAmount).toBe(110);
   });
 
-  it('calculates only after a staff member confirms the unit', () => {
+  it('adds an enabled flat express fee to the service total', () => {
     const confirmedConfig = structuredClone(config);
-    confirmedConfig.services[0].billingUnit = 'per-kg';
     confirmedConfig.express.enabled = true;
     confirmedConfig.express.amount = 5;
     confirmedConfig.express.unit = 'flat';

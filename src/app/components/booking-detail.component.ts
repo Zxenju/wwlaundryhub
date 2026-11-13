@@ -1,9 +1,10 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Booking, BookingStatus, PricingConfig } from '../models/booking';
+import { FormsModule } from '@angular/forms';
+import { Booking, BookingStatus, PaymentMethod, PricingConfig } from '../models/booking';
 
 @Component({
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, FormsModule],
   selector: 'app-booking-detail',
   styleUrl: './booking-detail.component.css',
   templateUrl: './booking-detail.component.html',
@@ -14,6 +15,10 @@ export class BookingDetailComponent {
   @Output() close = new EventEmitter<void>();
   @Output() edit = new EventEmitter<Booking>();
   @Output() delete = new EventEmitter<Booking>();
+  @Output() changePayment = new EventEmitter<{ booking: Booking; paid: boolean; method?: PaymentMethod }>();
+
+  protected readonly paymentMethods: PaymentMethod[] = ['Cash', 'GCash', 'Maya', 'Bank transfer', 'Other'];
+  protected selectedPaymentMethod: PaymentMethod = 'Cash';
 
   get pricingUnitLabel(): string {
     switch (this.booking.charge.billingUnit) {
@@ -23,9 +28,23 @@ export class BookingDetailComponent {
         return 'per load';
       case 'flat':
         return 'flat amount';
-      case 'unconfirmed':
-        return 'confirm with shop';
     }
+  }
+
+  get bookingReference(): string {
+    return this.booking.id.slice(0, 8).toUpperCase();
+  }
+
+  protected printReceipt(): void {
+    globalThis.window.print();
+  }
+
+  protected recordPayment(): void {
+    this.changePayment.emit({ booking: this.booking, paid: true, method: this.selectedPaymentMethod });
+  }
+
+  protected markUnpaid(): void {
+    this.changePayment.emit({ booking: this.booking, paid: false });
   }
 
   protected statusDescription(status: BookingStatus): string {

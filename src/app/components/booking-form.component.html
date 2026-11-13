@@ -4,7 +4,9 @@
       <div>
         <h2 id="booking-form-title">{{ booking ? 'Edit booking' : 'New booking' }}</h2>
       </div>
-      <button class="icon-button" type="button" aria-label="Close booking form" (click)="cancel.emit()">×</button>
+      <button class="icon-button" type="button" aria-label="Close booking form" (click)="cancel.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
     </header>
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
@@ -65,7 +67,6 @@
                   }
                   <option value="regular">{{ selectedService?.regularLabel ?? 'Regular Rate' }}</option>
                 </select>
-                <small class="field-hint">Confirm promo terms with the shop.</small>
               </label>
 
               <label class="field">
@@ -85,7 +86,7 @@
                   } @else if (form.controls.weightKg.hasError('weightPositive')) {
                     <small class="field-error">Weight must be greater than zero.</small>
                   } @else if (form.controls.weightKg.hasError('weightRange')) {
-                    <small class="field-error">Use {{ pricing.weightLimits.minimumKg }}–{{ pricing.weightLimits.maximumKg }} kg. These are demo limits, not shop policy.</small>
+                    <small class="field-error">Use {{ pricing.weightLimits.minimumKg }}–{{ pricing.weightLimits.maximumKg }} kg.</small>
                   }
                 }
               </label>
@@ -95,10 +96,6 @@
                   <input formControlName="express" type="checkbox" />
                   <span>{{ pricing.express.label }} — ₱{{ pricing.express.amount }} {{ pricing.express.unit }}</span>
                 </label>
-              } @else {
-                <p class="notice notice-inline form-field-wide">
-                  Express is unavailable until the shop confirms its service and fee.
-                </p>
               }
             </div>
           </section>
@@ -140,19 +137,19 @@
         <section class="estimate-box" aria-live="polite" aria-labelledby="estimate-title">
           <div class="estimate-heading">
             <div>
-              <h3 id="estimate-title">Charge estimate</h3>
+              <h3 id="estimate-title">Price breakdown</h3>
               <p>{{ estimate.serviceName }} · {{ selectedRateLabel }}</p>
             </div>
             @if (estimate.totalAmount !== null) {
               <strong>{{ estimate.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong>
             } @else {
-              <strong class="estimate-pending">Unit unconfirmed</strong>
+              <strong class="estimate-pending">—</strong>
             }
           </div>
           @if (selectedRate !== null) {
             <div class="estimate-line">
               <span>{{ selectedRateLabel }}: ₱{{ selectedRate }} / {{ pricingService.unitLabel(estimate.billingUnit) }}</span>
-              <span>{{ estimate.serviceAmount === null ? 'Not calculated' : (estimate.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}</span>
+              <span>{{ estimate.serviceAmount === null ? '—' : (estimate.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}</span>
             </div>
           }
           @if (estimate.expressLabel) {
@@ -162,7 +159,7 @@
             </div>
           }
           <p class="estimate-explanation">{{ estimate.explanation }}</p>
-          <small>Confirm the billing unit and promo terms before charging.</small>
+          <small>Calculated from the selected rate and entered weight.</small>
         </section>
       </div>
 

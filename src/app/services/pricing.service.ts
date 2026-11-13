@@ -10,7 +10,7 @@ export class PricingService {
         serviceName: 'Unknown service',
         rateLabel: 'No matching rate',
         rateAmount: 0,
-        billingUnit: 'unconfirmed',
+        billingUnit: 'per-kg',
         quantity: null,
         serviceAmount: null,
         expressLabel: null,
@@ -40,9 +40,7 @@ export class PricingService {
     }
 
     const totalAmount = serviceAmount === null ? null : this.roundCurrency(serviceAmount + expressAmount);
-    const explanation = service.billingUnit === 'unconfirmed'
-      ? 'The shop sign does not confirm the billing unit. Confirm it with the shop to calculate an amount.'
-      : `${rateAmount} × ${quantity} ${this.unitName(service.billingUnit)}${expressAmount ? `, plus ${expressAmount} express` : ''}.`;
+    const explanation = `₱${rateAmount} × ${quantity} ${this.unitName(service.billingUnit)}${expressAmount ? `, plus ₱${expressAmount} express` : ''}.`;
 
     return {
       serviceName: service.name,
@@ -66,8 +64,6 @@ export class PricingService {
         return 'per load';
       case 'flat':
         return 'flat amount';
-      case 'unconfirmed':
-        return 'unit to confirm';
     }
   }
 
@@ -79,8 +75,6 @@ export class PricingService {
         return 1;
       case 'flat':
         return 1;
-      case 'unconfirmed':
-        return null;
     }
   }
 
@@ -92,8 +86,6 @@ export class PricingService {
         return 'load';
       case 'flat':
         return 'flat amount';
-      case 'unconfirmed':
-        return 'unit';
     }
   }
 

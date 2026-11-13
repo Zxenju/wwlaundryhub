@@ -15,7 +15,6 @@ export class PricingSettingsComponent implements OnChanges {
 
   protected draft!: PricingConfig;
   protected readonly billingUnits: { value: BillingUnit; label: string }[] = [
-    { value: 'unconfirmed', label: 'Unit unconfirmed — confirm with shop' },
     { value: 'per-kg', label: 'Per kilogram' },
     { value: 'per-load', label: 'Per load' },
     { value: 'flat', label: 'Flat amount' },

@@ -1,3 +1,48 @@
+<article class="receipt-print" aria-label="Printable laundry booking receipt">
+  <header class="receipt-header">
+    <img src="/assets/wash-up-logo.jpg" alt="Wash-up Wash-up Laundry Hub" />
+    <div>
+      <h1>Wash-up Wash-up</h1>
+      <p>Laundry Hub · 0945-881-9148</p>
+    </div>
+  </header>
+  <div class="receipt-title-row">
+    <div>
+      <h2>Booking receipt</h2>
+      <p>Reference {{ bookingReference }}</p>
+    </div>
+    <span>{{ booking.status }}</span>
+  </div>
+  <dl class="receipt-fields">
+    <div><dt>Customer</dt><dd>{{ booking.customerName }}</dd></div>
+    <div><dt>Contact</dt><dd>{{ booking.contactNumber }}</dd></div>
+    <div><dt>Service</dt><dd>{{ booking.charge.serviceName }}</dd></div>
+    <div><dt>Booking date</dt><dd>{{ booking.bookingDate | date: 'mediumDate' }}</dd></div>
+    <div><dt>Pickup date</dt><dd>{{ booking.pickupDate | date: 'mediumDate' }}</dd></div>
+  </dl>
+  <section class="receipt-prices" aria-label="Price breakdown">
+    <div class="receipt-line receipt-line-heading"><span>Charge</span><span>Amount</span></div>
+    <div class="receipt-line">
+      <span>{{ booking.charge.rateLabel }} · {{ booking.weightKg | number: '1.0-2' }} kg × ₱{{ booking.charge.rateAmount }} / {{ pricingUnitLabel }}</span>
+      <span>{{ booking.charge.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</span>
+    </div>
+    @if (booking.charge.expressLabel) {
+      <div class="receipt-line"><span>{{ booking.charge.expressLabel }}</span><span>{{ booking.charge.expressAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</span></div>
+    }
+    <div class="receipt-line receipt-total"><strong>Total charge</strong><strong>{{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong></div>
+  </section>
+  <section class="receipt-prices receipt-payment-print" aria-label="Payment details">
+    <div class="receipt-line"><span>Payment status</span><span>{{ booking.payment?.status ?? 'Unpaid' }}</span></div>
+    @if (booking.payment?.status === 'Paid') {
+      <div class="receipt-line"><span>Paid via {{ booking.payment?.method }}</span><span>{{ booking.payment?.paidAt | date: 'medium' }}</span></div>
+      <div class="receipt-line receipt-total"><strong>Amount received</strong><strong>{{ booking.payment?.amount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong></div>
+    } @else {
+      <div class="receipt-line receipt-total"><strong>Amount due</strong><strong>{{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong></div>
+    }
+  </section>
+  <p class="receipt-footer">Thank you for choosing Wash-up Wash-up Laundry Hub.</p>
+</article>
+
 <div class="modal-backdrop">
   <section class="dialog detail-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-detail-title">
     <header class="dialog-header">
@@ -5,7 +50,9 @@
         <h2 id="booking-detail-title">{{ booking.customerName }}</h2>
         <p>{{ booking.contactNumber }}</p>
       </div>
-      <button class="icon-button" type="button" aria-label="Close booking details" (click)="close.emit()">×</button>
+      <button class="icon-button" type="button" aria-label="Close booking details" (click)="close.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
     </header>
 
     <div class="detail-status">
@@ -51,7 +98,7 @@
     </dl>
 
     <section class="detail-charge" aria-labelledby="detail-charge-title">
-      <h3 id="detail-charge-title">Charge estimate</h3>
+      <h3 id="detail-charge-title">Price breakdown</h3>
       <div>
         <span>Service rate</span>
         <span>₱{{ booking.charge.rateAmount }} / {{ pricingUnitLabel }}</span>
@@ -59,7 +106,7 @@
       <div>
         <span>Service amount</span>
         <span>
-          {{ booking.charge.serviceAmount === null ? 'Not calculated' : (booking.charge.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}
+          {{ booking.charge.serviceAmount === null ? '—' : (booking.charge.serviceAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}
         </span>
       </div>
       @if (booking.charge.expressLabel) {
@@ -69,12 +116,58 @@
         </div>
       }
       <div class="detail-total">
-        <strong>Total estimate</strong>
+        <strong>Total charge</strong>
         <strong>
-          {{ booking.charge.totalAmount === null ? 'Unit unconfirmed' : (booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}
+          {{ booking.charge.totalAmount === null ? '—' : (booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2') }}
         </strong>
       </div>
       <p>{{ booking.charge.explanation }}</p>
+    </section>
+
+    <section class="detail-payment" aria-labelledby="detail-payment-title">
+      <div class="payment-heading">
+        <h3 id="detail-payment-title">Payment</h3>
+        @if (booking.payment?.status === 'Paid') {
+          <span class="status-chip status-completed">Paid</span>
+        } @else {
+          <span class="status-chip status-received">Unpaid</span>
+        }
+      </div>
+      @if (booking.payment?.status === 'Paid') {
+        <div class="payment-record">
+          <strong>{{ booking.payment?.amount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong>
+          <span>{{ booking.payment?.method }} · {{ booking.payment?.paidAt | date: 'medium' }}</span>
+          <button class="button button-secondary" type="button" (click)="markUnpaid()">Mark unpaid</button>
+        </div>
+      } @else {
+        <div class="payment-editor">
+          <p>Amount due <strong>{{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong></p>
+          <label>
+            <span>Payment method</span>
+            <select [(ngModel)]="selectedPaymentMethod" name="paymentMethod">
+              @for (method of paymentMethods; track method) { <option [value]="method">{{ method }}</option> }
+            </select>
+          </label>
+          <button class="button button-primary" type="button" [disabled]="booking.charge.totalAmount === null" (click)="recordPayment()">Record payment</button>
+        </div>
+      }
+      <p class="payment-note">Recording payment uses the current booking charge and the time this action is saved.</p>
+    </section>
+
+    <section class="detail-history" aria-labelledby="detail-history-title">
+      <h3 id="detail-history-title">Status history</h3>
+      @if (booking.statusHistory?.length) {
+        <ol>
+          @for (event of booking.statusHistory; track $index) {
+            <li>
+              <span class="history-status">{{ event.status }}</span>
+              <time [attr.datetime]="event.changedAt">{{ event.changedAt | date: 'medium' }}</time>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p>Status updates will appear here.</p>
+      }
     </section>
 
     @if (booking.notes) {
@@ -88,6 +181,7 @@
       <button class="button button-danger" type="button" (click)="delete.emit(booking)">Delete booking</button>
       <span class="dialog-actions-spacer"></span>
       <button class="button button-secondary" type="button" (click)="close.emit()">Close</button>
+      <button class="button button-secondary print-receipt-button" type="button" (click)="printReceipt()">Print receipt</button>
       <button class="button button-primary" type="button" (click)="edit.emit(booking)">Edit booking</button>
     </footer>
   </section>

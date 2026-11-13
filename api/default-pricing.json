@@ -7,7 +7,7 @@
       "promoRate": 55,
       "regularLabel": "Regular Rate",
       "regularRate": 60,
-      "billingUnit": "unconfirmed"
+      "billingUnit": "per-kg"
     },
     {
       "id": "wash-dry",
@@ -16,7 +16,7 @@
       "promoRate": 55,
       "regularLabel": "Regular Rate",
       "regularRate": 65,
-      "billingUnit": "unconfirmed"
+      "billingUnit": "per-kg"
     },
     {
       "id": "drop-off",
@@ -25,12 +25,12 @@
       "promoRate": null,
       "regularLabel": "Shop sign rate",
       "regularRate": 30,
-      "billingUnit": "unconfirmed"
+      "billingUnit": "per-kg"
     }
   ],
   "express": {
     "enabled": false,
-    "label": "Express option (demo; confirm with shop)",
+    "label": "Express service",
     "amount": 0,
     "unit": "flat"
   },

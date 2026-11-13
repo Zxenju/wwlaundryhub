@@ -1,16 +1,11 @@
 <section class="page-heading">
   <div>
     <h1>Pricing setup</h1>
-    <p>Posted rates and estimate rules for the counter.</p>
   </div>
   <button class="button button-primary" type="button" [disabled]="!valid || saving" (click)="save()">
     {{ saving ? 'Saving…' : 'Save pricing' }}
   </button>
 </section>
-
-<div class="notice notice-demo pricing-warning">
-  <strong>Billing units and promo terms are unconfirmed. Verify them with the shop before charging.</strong>
-</div>
 
 <section class="pricing-section">
   <div class="section-heading">
@@ -59,35 +54,34 @@
 <section class="settings-grid">
   <article class="settings-panel">
     <h2>Express option</h2>
-    <p>Philippine shops use different rush fees and turnaround promises. The Wash-up sign does not confirm Express service, so leave this off until the shop confirms its terms.</p>
     <label class="check-field settings-toggle">
       <input [(ngModel)]="draft.express.enabled" name="expressEnabled" type="checkbox" />
       <span>Enable express option on booking form</span>
     </label>
-    <label class="field">
-      <span>Option label</span>
-      <input [(ngModel)]="draft.express.label" name="expressLabel" />
-    </label>
-    <div class="express-fields">
+    @if (draft.express.enabled) {
       <label class="field">
-        <span>Express amount (₱)</span>
-        <input [(ngModel)]="draft.express.amount" name="expressAmount" type="number" min="0" step="0.01" />
+        <span>Option label</span>
+        <input [(ngModel)]="draft.express.label" name="expressLabel" />
       </label>
-      <label class="field">
-        <span>Express billing basis</span>
-        <select [(ngModel)]="draft.express.unit" name="expressUnit">
-          <option value="flat">Flat amount</option>
-          <option value="per-kg">Per kilogram</option>
-          <option value="per-load">Per load</option>
-        </select>
-      </label>
-    </div>
-    <small class="field-hint">The surcharge is included in estimates only when enabled.</small>
+      <div class="express-fields">
+        <label class="field">
+          <span>Express amount (₱)</span>
+          <input [(ngModel)]="draft.express.amount" name="expressAmount" type="number" min="0" step="0.01" />
+        </label>
+        <label class="field">
+          <span>Express billing basis</span>
+          <select [(ngModel)]="draft.express.unit" name="expressUnit">
+            <option value="flat">Flat amount</option>
+            <option value="per-kg">Per kilogram</option>
+            <option value="per-load">Per load</option>
+          </select>
+        </label>
+      </div>
+    }
   </article>
 
   <article class="settings-panel">
     <h2>Weight validation limits</h2>
-    <p>Demo limits only; they are not confirmed shop policy.</p>
     <div class="express-fields">
       <label class="field">
         <span>Minimum weight (kg)</span>

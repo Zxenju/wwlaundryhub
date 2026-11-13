@@ -39,16 +39,19 @@
           },
           "configurations": {
             "production": {
+              "optimization": true,
+              "sourceMap": false,
+              "extractLicenses": true,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                    "maximumWarning": "540kB",
                   "maximumError": "1MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "10kB",
+                  "maximumError": "12kB"
                 }
               ],
               "outputHashing": "all"

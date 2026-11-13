@@ -5,8 +5,22 @@ export type BookingStatus =
   | 'Ready for Pickup'
   | 'Completed';
 
+export interface BookingStatusEvent {
+  status: BookingStatus;
+  changedAt: string;
+}
+
+export type PaymentMethod = 'Cash' | 'GCash' | 'Maya' | 'Bank transfer' | 'Other';
+
+export interface BookingPayment {
+  status: 'Unpaid' | 'Paid';
+  amount: number | null;
+  method: PaymentMethod | null;
+  paidAt: string | null;
+}
+
 export type RateType = 'promo' | 'regular';
-export type BillingUnit = 'unconfirmed' | 'per-kg' | 'per-load' | 'flat';
+export type BillingUnit = 'per-kg' | 'per-load' | 'flat';
 export type ExpressUnit = 'flat' | 'per-kg' | 'per-load';
 
 export interface ServicePricing {
@@ -66,6 +80,8 @@ export interface Booking extends BookingDraft {
   updatedAt: string;
   completedAt?: string | null;
   demoRecord?: boolean;
+  statusHistory?: BookingStatusEvent[];
+  payment?: BookingPayment;
 }
 
 export interface BookingListResponse {

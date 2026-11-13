@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Booking, BookingStatus, PricingConfig } from '../models/booking';
+import { BillingUnit, Booking, BookingStatus, PricingConfig } from '../models/booking';
 
 @Component({
   imports: [CurrencyPipe, DatePipe],
@@ -48,8 +48,10 @@ export class DashboardComponent implements OnChanges {
     return this.stationQueues.get(status)?.length ?? 0;
   }
 
-  protected displayRate(rate: number | null): string {
-    return rate === null ? '—' : `₱${rate}`;
+  protected displayRate(rate: number | null, unit: BillingUnit): string {
+    if (rate === null) return '—';
+    const unitLabel = unit === 'per-kg' ? '/ kg' : unit === 'per-load' ? '/ load' : 'flat';
+    return `₱${rate} ${unitLabel}`;
   }
 
   protected stationBookings(status: BookingStatus): Booking[] {
@@ -81,17 +83,9 @@ export class DashboardComponent implements OnChanges {
   }
 
   get todayRevenue(): number {
-    if (this.unpricedCompletedTodayCount) return 0;
     return this.bookings
       .filter((booking) => booking.status === 'Completed' && this.completedOnDate(booking.completedAt))
       .reduce((total, booking) => total + (booking.charge.totalAmount ?? 0), 0);
-  }
-
-  get unpricedCompletedTodayCount(): number {
-    return this.bookings.filter((booking) =>
-      booking.status === 'Completed'
-      && this.completedOnDate(booking.completedAt)
-      && booking.charge.totalAmount === null).length;
   }
 
   private completedOnDate(value?: string | null): boolean {

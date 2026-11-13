@@ -10,8 +10,13 @@ const bookingsFile = join(dataDirectory, 'bookings.json');
 const pricingFile = join(dataDirectory, 'pricing.json');
 const defaultPricingFile = join(apiDirectory, 'default-pricing.json');
 const allowedStatuses = ['Received', 'Washing', 'Drying', 'Ready for Pickup', 'Completed'];
-const allowedUnits = ['unconfirmed', 'per-kg', 'per-load', 'flat'];
+const allowedUnits = ['per-kg', 'per-load', 'flat'];
+const allowedPaymentMethods = ['Cash', 'GCash', 'Maya', 'Bank transfer', 'Other'];
 let storePromise;
+
+function unpaidPayment() {
+  return { status: 'Unpaid', amount: null, method: null, paidAt: null };
+}
 
 function localDate(offsetDays = 0) {
   const date = new Date();
@@ -41,16 +46,33 @@ function isPhilippineContact(value) {
 function makeDemoBookings(pricing) {
   const services = pricing.services;
   const sampleRows = [
-    ['Demo customer A', '0900 000 0001', services[0], 'promo', 4.2, false, 0, 1, 'Washing'],
-    ['Demo customer B', '0900 000 0002', services[1], 'regular', 2.5, false, 0, 0, 'Ready for Pickup'],
-    ['Demo customer C', '0900 000 0003', services[2], 'regular', 3, false, -1, 0, 'Completed'],
-    ['Demo customer D', '0900 000 0004', services[0], 'regular', 5.8, false, 0, 2, 'Received'],
+    ['Mariel Santos', '0900 000 0141', services[0], 'promo', 2.4, -28, -26, 'Completed', 'Fold shirts separately.'],
+    ['Carlo Mendoza', '0900 000 0142', services[1], 'regular', 3.8, -23, -21, 'Completed', 'Two pillowcases in the load.'],
+    ['Joyce Ramirez', '0900 000 0143', services[2], 'regular', 1.5, -17, -15, 'Completed', 'Small drop-off load.'],
+    ['Paolo Reyes', '0900 000 0144', services[0], 'regular', 4.7, -12, -10, 'Completed', 'Keep the towels together.'],
+    ['Andrea Dela Cruz', '0900 000 0145', services[1], 'promo', 2.1, -8, -6, 'Completed', 'Fold items separately.'],
+    ['Rica Villanueva', '0900 000 0146', services[0], 'promo', 6.2, -6, -2, 'Ready for Pickup', 'Call before pickup.'],
+    ['Noel Flores', '0900 000 0147', services[2], 'regular', 1.1, -2, 0, 'Ready for Pickup', 'Pick-up after 4 PM.'],
+    ['Mikaela Garcia', '0900 000 0148', services[1], 'regular', 3.3, -1, 1, 'Drying', 'Separate dark items.'],
+    ['Renz Bautista', '0900 000 0149', services[0], 'promo', 2.8, -1, 2, 'Washing', 'Regular wash cycle.'],
+    ['Liza Castillo', '0900 000 0150', services[1], 'regular', 4, 0, 3, 'Received', 'Fold on completion.'],
+    ['Janelle Navarro', '0900 000 0151', services[0], 'regular', 5.6, 0, 4, 'Received', 'Keep bedding in its own bag.'],
+    ['Miguel Torres', '0900 000 0152', services[2], 'regular', 1.9, -4, 0, 'Received', 'Drop-off service.'],
   ];
 
-  return sampleRows.map(([customerName, contactNumber, service, rateType, weightKg, express, bookingOffset, pickupOffset, status]) => {
-    const serviceRate = rateType === 'promo' && service.promoRate !== null ? service.promoRate : service.regularRate;
-    const serviceLabel = rateType === 'promo' && service.promoRate !== null ? service.promoLabel : service.regularLabel;
-    const now = new Date().toISOString();
+  return sampleRows.map(([customerName, contactNumber, service, rateType, weightKg, bookingOffset, pickupOffset, status, notes], index) => {
+    const bookingDate = localDate(bookingOffset);
+    const pickupDate = localDate(pickupOffset);
+    const statusHistory = allowedStatuses
+      .slice(0, allowedStatuses.indexOf(status) + 1)
+      .map((stage, step) => ({
+        status: stage,
+        changedAt: new Date(`${bookingDate}T${String(9 + step * 2).padStart(2, '0')}:00:00`).toISOString(),
+      }));
+    const completedAt = status === 'Completed' ? statusHistory.at(-1).changedAt : null;
+    const charge = calculateCharge({ serviceId: service.id, rateType, weightKg, express: false }, pricing);
+    const paid = status === 'Completed';
+    const paidAt = paid ? completedAt : null;
     return {
       id: randomUUID(),
       customerName,
@@ -58,26 +80,22 @@ function makeDemoBookings(pricing) {
       serviceId: service.id,
       rateType,
       weightKg,
-      express,
-      bookingDate: localDate(bookingOffset),
-      pickupDate: localDate(pickupOffset),
-      notes: 'Fictional sample record for class demonstration.',
+      express: false,
+      bookingDate,
+      pickupDate,
+      notes,
       status,
-      charge: {
-        serviceName: service.name,
-        rateLabel: serviceLabel,
-        rateAmount: serviceRate,
-        billingUnit: service.billingUnit,
-        quantity: null,
-        serviceAmount: null,
-        expressLabel: null,
-        expressAmount: 0,
-        totalAmount: null,
-        explanation: 'Demo record. The shop sign does not confirm the billing unit.',
+      statusHistory,
+      payment: {
+        status: paid ? 'Paid' : 'Unpaid',
+        amount: paid ? charge.totalAmount : null,
+        method: paid ? ['Cash', 'GCash', 'Maya'][index % 3] : null,
+        paidAt,
       },
-      createdAt: now,
-      updatedAt: now,
-      completedAt: status === 'Completed' ? new Date(`${localDate(bookingOffset)}T12:00:00`).toISOString() : null,
+      charge,
+      createdAt: statusHistory[0].changedAt,
+      updatedAt: statusHistory.at(-1).changedAt,
+      completedAt,
       demoRecord: true,
     };
   });
@@ -113,6 +131,24 @@ async function loadStore() {
         bookings = makeDemoBookings(pricing);
         await writeJson(bookingsFile, bookings);
       }
+
+      let refreshedBookings = false;
+      bookings = bookings.map((booking) => {
+        const needsChargeRefresh = booking.demoRecord
+          || booking.charge?.billingUnit === 'unconfirmed'
+          || booking.charge?.totalAmount === null;
+        const needsHistory = !Array.isArray(booking.statusHistory);
+        const needsPayment = !booking.payment;
+        if (!needsChargeRefresh && !needsHistory && !needsPayment) return booking;
+        refreshedBookings = true;
+        return {
+          ...booking,
+          ...(needsChargeRefresh ? { charge: calculateCharge(booking, pricing) } : {}),
+          ...(needsHistory ? { statusHistory: [] } : {}),
+          ...(needsPayment ? { payment: unpaidPayment() } : {}),
+        };
+      });
+      if (refreshedBookings) await writeJson(bookingsFile, bookings);
 
       return { bookings, pricing };
     })();
@@ -167,17 +203,15 @@ function calculateCharge(draft, pricing) {
   const usePromo = draft.rateType === 'promo' && service.promoRate !== null;
   const rateAmount = usePromo ? service.promoRate : service.regularRate;
   const rateLabel = usePromo ? service.promoLabel : service.regularLabel;
-  const quantity = service.billingUnit === 'per-kg'
-    ? draft.weightKg
-    : service.billingUnit === 'unconfirmed' ? null : 1;
-  const serviceAmount = quantity === null ? null : Math.round(rateAmount * quantity * 100) / 100;
+  const quantity = service.billingUnit === 'per-kg' ? draft.weightKg : 1;
+  const serviceAmount = roundCurrency(rateAmount * quantity);
   let expressAmount = 0;
   let expressLabel = null;
 
   if (draft.express && pricing.express.enabled) {
     expressLabel = pricing.express.label;
     const expressQuantity = pricing.express.unit === 'per-kg' ? draft.weightKg : 1;
-    expressAmount = Math.round(pricing.express.amount * expressQuantity * 100) / 100;
+    expressAmount = roundCurrency(pricing.express.amount * expressQuantity);
   }
 
   return {
@@ -189,11 +223,13 @@ function calculateCharge(draft, pricing) {
     serviceAmount,
     expressLabel,
     expressAmount,
-    totalAmount: serviceAmount === null ? null : Math.round((serviceAmount + expressAmount) * 100) / 100,
-    explanation: service.billingUnit === 'unconfirmed'
-      ? 'The shop sign does not confirm the billing unit. Confirm it with the shop to calculate an amount.'
-      : `${rateAmount} × ${quantity} ${service.billingUnit === 'per-kg' ? 'kg' : service.billingUnit === 'per-load' ? 'load' : 'flat amount'}${expressAmount ? `, plus ${expressAmount} express` : ''}.`,
+    totalAmount: roundCurrency(serviceAmount + expressAmount),
+    explanation: `₱${rateAmount} × ${quantity} ${service.billingUnit === 'per-kg' ? 'kg' : service.billingUnit === 'per-load' ? 'load' : 'flat amount'}${expressAmount ? `, plus ₱${expressAmount} express` : ''}.`,
   };
+}
+
+function roundCurrency(amount) {
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
 
 function validatePricing(config) {
@@ -226,7 +262,7 @@ function validatePricing(config) {
 
 const server = createServer(async (request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (request.method === 'OPTIONS') {
     response.writeHead(204).end();
@@ -280,6 +316,8 @@ const server = createServer(async (request, response) => {
         charge: calculateCharge(draft, store.pricing),
         createdAt: now,
         updatedAt: now,
+        statusHistory: [{ status: draft.status, changedAt: now }],
+        payment: unpaidPayment(),
         completedAt: draft.status === 'Completed' ? now : null,
         demoRecord: false,
       };
@@ -287,6 +325,52 @@ const server = createServer(async (request, response) => {
       await writeJson(bookingsFile, store.bookings);
       sendJson(response, 201, booking);
       return;
+    }
+
+    const paymentMatch = url.pathname.match(/^\/api\/bookings\/([^/]+)\/payment$/);
+    if (paymentMatch) {
+      const id = decodeURIComponent(paymentMatch[1]);
+      const index = store.bookings.findIndex((booking) => booking.id === id);
+      if (index < 0) {
+        sendJson(response, 404, { error: 'Booking not found.' });
+        return;
+      }
+      if (request.method === 'PATCH') {
+        const draft = await readRequestBody(request);
+        if (typeof draft.paid !== 'boolean') {
+          sendJson(response, 400, { error: 'Choose whether the booking is paid or unpaid.' });
+          return;
+        }
+        const existing = store.bookings[index];
+        let payment;
+        if (!draft.paid) {
+          payment = unpaidPayment();
+        } else {
+          if (!allowedPaymentMethods.includes(draft.method)) {
+            sendJson(response, 400, { error: 'Choose a valid payment method.' });
+            return;
+          }
+          if (!Number.isFinite(existing.charge?.totalAmount) || existing.charge.totalAmount <= 0) {
+            sendJson(response, 400, { error: 'This booking needs a valid charge before payment can be recorded.' });
+            return;
+          }
+          if (existing.payment?.status === 'Paid') {
+            sendJson(response, 409, { error: 'This booking is already paid. Mark it unpaid before recording payment again.' });
+            return;
+          }
+          payment = {
+            status: 'Paid',
+            amount: existing.charge.totalAmount,
+            method: draft.method,
+            paidAt: new Date().toISOString(),
+          };
+        }
+        const saved = { ...existing, payment, updatedAt: new Date().toISOString() };
+        store.bookings[index] = saved;
+        await writeJson(bookingsFile, store.bookings);
+        sendJson(response, 200, saved);
+        return;
+      }
     }
 
     const bookingMatch = url.pathname.match(/^\/api\/bookings\/([^/]+)$/);
@@ -312,13 +396,24 @@ const server = createServer(async (request, response) => {
         }
         const pricingChanged = ['serviceId', 'rateType', 'weightKg', 'express']
           .some((key) => draft[key] !== existing[key]);
+        if (pricingChanged && existing.payment?.status === 'Paid') {
+          sendJson(response, 409, { error: 'Mark this booking unpaid before changing its price.' });
+          return;
+        }
+        const statusChanged = draft.status !== existing.status;
+        const now = new Date().toISOString();
         const saved = {
           ...existing,
           ...draft,
           charge: pricingChanged ? calculateCharge(draft, store.pricing) : existing.charge,
-          updatedAt: new Date().toISOString(),
+          payment: existing.payment ?? unpaidPayment(),
+          updatedAt: now,
+          statusHistory: [
+            ...(Array.isArray(existing.statusHistory) ? existing.statusHistory : []),
+            ...(statusChanged ? [{ status: draft.status, changedAt: now }] : []),
+          ],
           completedAt: draft.status === 'Completed'
-            ? existing.status === 'Completed' ? existing.completedAt : new Date().toISOString()
+            ? existing.status === 'Completed' ? existing.completedAt : now
             : null,
         };
         store.bookings[index] = saved;
