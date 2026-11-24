@@ -20,6 +20,7 @@ export class DashboardComponent implements OnChanges {
   @Output() showPricing = new EventEmitter<void>();
   @Output() newBooking = new EventEmitter<void>();
   @Output() selectBooking = new EventEmitter<Booking>();
+  @Output() changeStatus = new EventEmitter<{ booking: Booking; status: BookingStatus }>();
 
   protected readonly stations: Array<{ status: BookingStatus; title: string; description: string; icon: string }> = [
     { status: 'Received', title: 'Intake', description: 'At the counter', icon: 'intake' },
@@ -82,6 +83,21 @@ export class DashboardComponent implements OnChanges {
     return emptyCopy[status] ?? 'No loads at this station.';
   }
 
+  protected nextStationStatus(status: BookingStatus): BookingStatus | null {
+    const nextStatus: Partial<Record<BookingStatus, BookingStatus>> = {
+      Received: 'Washing',
+      Washing: 'Drying',
+      Drying: 'Ready for Pickup',
+      'Ready for Pickup': 'Completed',
+    };
+    return nextStatus[status] ?? null;
+  }
+
+  protected advanceBooking(booking: Booking): void {
+    const status = this.nextStationStatus(booking.status);
+    if (status) this.changeStatus.emit({ booking, status });
+  }
+
   get todayRevenue(): number {
     return this.bookings
       .filter((booking) => booking.status === 'Completed' && this.completedOnDate(booking.completedAt))
@@ -98,3 +114,4 @@ export class DashboardComponent implements OnChanges {
   }
 
 }
+
