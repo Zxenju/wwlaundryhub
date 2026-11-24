@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/Laundry-Hub/browser",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://fearless-flexibility-production-df22d8e4.up.railway.app/api/:path*"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import { Booking, BookingDraft, BookingListResponse, PaymentMethod, PricingConfi
 @Injectable({ providedIn: 'root' })
 export class BookingApiService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:3000/api';
+  private readonly apiUrl = '/api';
 
   getBookings(): Observable<BookingListResponse> {
     return this.http.get<BookingListResponse>(`${this.apiUrl}/bookings`);

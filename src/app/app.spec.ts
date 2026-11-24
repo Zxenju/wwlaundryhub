@@ -23,8 +23,8 @@ describe('App', () => {
     const http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    http.expectOne('http://127.0.0.1:3000/api/bookings').flush({ bookings: [], demoData: false });
-    http.expectOne('http://127.0.0.1:3000/api/pricing').flush({
+    http.expectOne('/api/bookings').flush({ bookings: [], demoData: false });
+    http.expectOne('/api/pricing').flush({
       services: [],
       express: { enabled: false, label: 'Express', amount: 0, unit: 'flat' },
       weightLimits: { minimumKg: 0.1, maximumKg: 30 },
