@@ -10,17 +10,17 @@
   <div class="list-toolbar">
     <label class="search-field">
       <span class="sr-only">Search bookings by customer, phone or service</span>
-      <input [(ngModel)]="search" name="bookingSearch" type="search" placeholder="Search bookings" />
+      <input [ngModel]="search" (ngModelChange)="setSearch($event)" name="bookingSearch" type="search" placeholder="Search bookings" />
     </label>
     <span class="result-count" aria-live="polite">
       {{ filteredBookings.length }} {{ filteredBookings.length === 1 ? 'ticket' : 'tickets' }}
     </span>
     <nav class="queue-filters" aria-label="Filter queue by wash stage">
       <button type="button" class="queue-filter" [class.selected]="statusFilter === 'All'"
-        [attr.aria-pressed]="statusFilter === 'All'" (click)="statusFilter = 'All'">All <span>{{ bookings.length }}</span></button>
+        [attr.aria-pressed]="statusFilter === 'All'" (click)="setStatusFilter('All')">All <span>{{ bookings.length }}</span></button>
       @for (status of statuses; track status) {
         <button type="button" class="queue-filter" [class.selected]="statusFilter === status"
-          [attr.aria-pressed]="statusFilter === status" (click)="statusFilter = status">{{ status }} <span>{{ countAt(status) }}</span></button>
+          [attr.aria-pressed]="statusFilter === status" (click)="setStatusFilter(status)">{{ status }} <span>{{ countAt(status) }}</span></button>
       }
     </nav>
   </div>
@@ -38,7 +38,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (booking of filteredBookings; track booking.id) {
+          @for (booking of pageBookings; track booking.id) {
             <tr>
               <td data-label="Customer" class="customer-cell">
                 <button
@@ -102,12 +102,28 @@
         </tbody>
       </table>
     </div>
+    @if (filteredBookings.length > pageSize) {
+      <nav class="booking-pagination" aria-label="Booking pages">
+        <span class="pagination-range" aria-live="polite">{{ firstVisibleBooking }}–{{ lastVisibleBooking }} of {{ filteredBookings.length }}</span>
+        <div class="pagination-controls">
+          <button class="button button-secondary pagination-button" type="button" aria-label="Previous page"
+            [disabled]="pageIndex === 1" (click)="previousPage()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+          <span class="pagination-page" aria-live="polite">{{ pageIndex }} / {{ totalPages }}</span>
+          <button class="button button-secondary pagination-button" type="button" aria-label="Next page"
+            [disabled]="pageIndex === totalPages" (click)="nextPage()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        </div>
+      </nav>
+    }
   } @else {
     <div class="empty-state">
       @if (bookings.length) {
         <h2>No matching bookings</h2>
         <p>Try another search or status.</p>
-        <button class="button button-secondary" type="button" (click)="search = ''; statusFilter = 'All'">
+        <button class="button button-secondary" type="button" (click)="setSearch(''); setStatusFilter('All')">
           Clear filters
         </button>
       } @else {
@@ -118,3 +134,4 @@
     </div>
   }
 </section>
+
