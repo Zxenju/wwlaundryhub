@@ -12,6 +12,12 @@
 .queue-filter.selected { color: var(--accent-ink); }
 .queue-filter.selected::after { height: 2px; }
 .table-scroll { border-top: 0; }
+.booking-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.pagination-range, .pagination-page { color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pagination-controls { display: flex; align-items: center; gap: 12px; }
+.pagination-button { display: inline-grid; width: 40px; min-height: 40px; padding: 0; place-items: center; }
+.pagination-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.pagination-button:disabled { opacity: .48; cursor: not-allowed; }
 .booking-list-section .booking-table { border-collapse: separate; border-spacing: 0; }
 .booking-list-section .booking-table thead { background: color-mix(in srgb, var(--surface-blue) 42%, var(--surface)); }
 .booking-list-section .booking-table th { padding: 12px 14px; border-top: 1px solid var(--line); font-size: 11px; letter-spacing: .035em; text-transform: uppercase; }
@@ -30,6 +36,7 @@
 @media (max-width: 820px) {
   .booking-list-section { border-radius: var(--radius-md); }
   .list-toolbar { padding: 13px 13px 0; }
+  .booking-pagination { padding-inline: 13px; }
 }
 
 @media (max-width: 560px) {
@@ -44,3 +51,4 @@
 @media (prefers-reduced-motion: reduce) {
   .booking-list-section .booking-table tbody tr { transition: none; }
 }
+
