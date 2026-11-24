@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "start:api": "node api/server.mjs",
+    "db:import-json": "node api/import-json-to-mysql.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -22,6 +23,7 @@
     "@angular/router": "^22.2.0",
     "@angular/ssr": "^22.2.3",
     "express": "^5.1.0",
+    "mysql2": "^3.24.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

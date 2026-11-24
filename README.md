@@ -7,7 +7,7 @@ A staff-facing Angular app for creating laundry bookings, tracking work through 
 - Node.js 22 or later
 - npm
 
-The Angular app talks to a small local Node.js API. Booking and pricing records are stored as JSON under `api/.data/`; this project does not currently use MySQL or SQLite.
+The Angular app talks to a Node.js API. By default, local development stores bookings and pricing as JSON under `api/.data/`. When `DATABASE_URL` or Railway's `MYSQLHOST`, `MYSQLUSER`, and `MYSQLDATABASE` variables are present, the API creates its MySQL tables and reads/writes through MySQL instead.
 
 ## Run locally
 
@@ -27,7 +27,7 @@ npm start
 
 Open `http://localhost:4200`. Keep both processes running. If port 3000 is already in use, use the existing API terminal or stop that process before starting another copy.
 
-On first API start, the app creates fictional demo bookings and a pricing file from `api/default-pricing.json`. Local data is ignored by Git in `api/.data/`.
+On first local JSON-backed API start, the app creates fictional demo bookings and a pricing file from `api/default-pricing.json`. Local data is ignored by Git in `api/.data/`. MySQL mode starts with default pricing and an empty booking table; import local records with `npm run db:import-json` after setting the MySQL connection variables. Existing booking IDs are never replaced. Existing database pricing is left unchanged by default; use `npm run db:import-json -- --replace-pricing` if the database still has only its initial defaults and you want to copy the local pricing file.
 
 ## Main features
 
@@ -51,11 +51,13 @@ On first API start, the app creates fictional demo bookings and a pricing file f
 
 The app calculates estimates from these editable settings. Express is disabled by default. The default weight validation range of 0.1–30 kg is a configurable project setting.
 
-The API is local and stores JSON files; it is suitable for a classroom demonstration on one machine, not simultaneous multi-device production use. Demo names and numbers are fictional. Payment records represent staff-entered full payments and do not connect to a bank or e-wallet.
+The API supports local JSON storage for development and MySQL storage when configured. The Railway deployment still needs its MySQL variables and a Vercel-origin `CORS_ORIGINS` allowlist. Demo names and numbers are fictional. Payment records represent staff-entered full payments and do not connect to a bank or e-wallet. The API does not yet provide staff authentication; do not use real customer data until access control is added.
 
 ## API
 
-Base URL: `http://127.0.0.1:3000/api`
+Local base URL: `http://127.0.0.1:3000/api`. Production should use the Railway HTTPS API domain.
+
+`GET /api/health` is available for deployment health checks. It verifies that the configured MySQL schema can be initialized before returning success.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
@@ -66,6 +68,7 @@ Base URL: `http://127.0.0.1:3000/api`
 | DELETE | `/bookings/:id` | Delete a booking |
 | GET | `/pricing` | Read service pricing and weight limits |
 | PUT | `/pricing` | Save pricing configuration |
+| GET | `/health` | API/database health check |
 
 ## Project structure
 
@@ -74,7 +77,9 @@ Base URL: `http://127.0.0.1:3000/api`
 - `src/app/services/pricing.service.ts` — charge estimate calculation.
 - `src/app/validators/booking.validators.ts` — custom reactive-form validators.
 - `src/app/models/booking.ts` — booking, pricing, status-history, and payment types.
-- `api/server.mjs` — local API and JSON persistence.
+- `api/server.mjs` — API routes, CORS, health check, and Railway-compatible host/port binding.
+- `api/mysql-store.mjs` — MySQL tables and persistence; JSON files remain the local fallback.
+- `api/import-json-to-mysql.mjs` — repeat-safe importer for local JSON bookings and pricing.
 - `api/default-pricing.json` — seed rates and settings.
 - `docs/` — research and submission-readiness notes.
 

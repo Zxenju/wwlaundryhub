@@ -3,6 +3,14 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import {
+  deleteMysqlBooking,
+  initializeMysqlStore,
+  isMysqlConfigured,
+  readMysqlStore,
+  saveMysqlBooking,
+  saveMysqlPricing,
+} from './mysql-store.mjs';
 
 const apiDirectory = dirname(fileURLToPath(import.meta.url));
 const dataDirectory = join(apiDirectory, '.data');
@@ -111,6 +119,12 @@ async function writeJson(path, value) {
 }
 
 async function loadStore() {
+  if (isMysqlConfigured()) {
+    return readMysqlStore(await readJson(defaultPricingFile));
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Production API requires DATABASE_URL or Railway MYSQL* variables.');
+  }
   if (!storePromise) {
     storePromise = (async () => {
       await mkdir(dataDirectory, { recursive: true });
@@ -154,6 +168,16 @@ async function loadStore() {
     })();
   }
   return storePromise;
+}
+
+async function persistBookings(store, booking) {
+  if (isMysqlConfigured()) await saveMysqlBooking(booking);
+  else await writeJson(bookingsFile, store.bookings);
+}
+
+async function persistPricing(store) {
+  if (isMysqlConfigured()) await saveMysqlPricing(store.pricing);
+  else await writeJson(pricingFile, store.pricing);
 }
 
 function sendJson(response, statusCode, payload) {
@@ -261,16 +285,36 @@ function validatePricing(config) {
 }
 
 const server = createServer(async (request, response) => {
-  response.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200,http://127.0.0.1:4200')
+    .split(',').map((origin) => origin.trim()).filter(Boolean);
+  const requestOrigin = request.headers.origin;
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    response.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    response.setHeader('Vary', 'Origin');
+  }
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (request.method === 'OPTIONS') {
+    if (requestOrigin && !allowedOrigins.includes(requestOrigin)) {
+      response.writeHead(403).end();
+      return;
+    }
     response.writeHead(204).end();
     return;
   }
 
   try {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1:3000');
+    if (request.method === 'GET' && url.pathname === '/api/health') {
+      if (isMysqlConfigured()) {
+        await initializeMysqlStore();
+      } else if (process.env.NODE_ENV === 'production') {
+        sendJson(response, 503, { status: 'error', error: 'Production database is not configured.' });
+        return;
+      }
+      sendJson(response, 200, { status: 'ok', storage: isMysqlConfigured() ? 'mysql' : 'local-json' });
+      return;
+    }
     const store = await loadStore();
 
     if (request.method === 'GET' && url.pathname === '/api/bookings') {
@@ -292,7 +336,7 @@ const server = createServer(async (request, response) => {
         return;
       }
       store.pricing = config;
-      await writeJson(pricingFile, store.pricing);
+      await persistPricing(store);
       sendJson(response, 200, store.pricing);
       return;
     }
@@ -322,7 +366,7 @@ const server = createServer(async (request, response) => {
         demoRecord: false,
       };
       store.bookings.unshift(booking);
-      await writeJson(bookingsFile, store.bookings);
+      await persistBookings(store, booking);
       sendJson(response, 201, booking);
       return;
     }
@@ -367,7 +411,7 @@ const server = createServer(async (request, response) => {
         }
         const saved = { ...existing, payment, updatedAt: new Date().toISOString() };
         store.bookings[index] = saved;
-        await writeJson(bookingsFile, store.bookings);
+        await persistBookings(store, saved);
         sendJson(response, 200, saved);
         return;
       }
@@ -417,14 +461,15 @@ const server = createServer(async (request, response) => {
             : null,
         };
         store.bookings[index] = saved;
-        await writeJson(bookingsFile, store.bookings);
+        await persistBookings(store, saved);
         sendJson(response, 200, saved);
         return;
       }
 
       if (request.method === 'DELETE') {
         store.bookings.splice(index, 1);
-        await writeJson(bookingsFile, store.bookings);
+        if (isMysqlConfigured()) await deleteMysqlBooking(id);
+        else await writeJson(bookingsFile, store.bookings);
         response.writeHead(204).end();
         return;
       }
@@ -442,7 +487,8 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(3000, '127.0.0.1', () => {
-  console.log('Laundry Hub local API listening at http://127.0.0.1:3000');
-  console.log('Booking and pricing data are stored in api/.data/');
+const port = Number(process.env.PORT || 3000);
+server.listen(port, '0.0.0.0', () => {
+  const storage = isMysqlConfigured() ? 'Railway MySQL' : 'local JSON files';
+  console.log(`Laundry Hub API listening on port ${port} with ${storage}.`);
 });
