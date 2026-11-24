@@ -22,7 +22,20 @@
       <div class="rate-config promo-rate-config">
         <label class="field">
           <span>Promotion label</span>
-          <input [(ngModel)]="service.promoLabel" [name]="'promo-label-' + service.id" [disabled]="service.promoRate === null" />
+          <select
+            [ngModel]="selectedPromoLabel(service.id, service.promoLabel)"
+            (ngModelChange)="setPromoLabel(service, $event)"
+            [name]="'promo-label-choice-' + service.id"
+            [disabled]="service.promoRate === null"
+          >
+            @for (label of promoLabelOptions; track label) {
+              <option [value]="label">{{ label }}</option>
+            }
+            <option value="custom">Custom label…</option>
+          </select>
+          @if (selectedPromoLabel(service.id, service.promoLabel) === 'custom') {
+            <input [(ngModel)]="service.promoLabel" [name]="'promo-label-custom-' + service.id" aria-label="Custom promotion label" placeholder="Enter a promotion label" [disabled]="service.promoRate === null" />
+          }
         </label>
         <label class="field">
           <span>Promo rate</span>
@@ -97,4 +110,5 @@
     }
   </article>
 </section>
+
 
