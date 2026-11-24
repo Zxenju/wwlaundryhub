@@ -26,8 +26,13 @@
 .station-label h3 { font-size: 14px; }
 .station-count { border: 1px solid var(--line); background: var(--surface); }
 .station-tickets { margin-top: 12px; }
-.station-ticket { min-height: 62px; padding-inline: 5px; }
-.paged-tickets .station-ticket { height: 68px; min-height: 68px; }
+.station-ticket-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 38px; align-items: center; border-bottom: 1px solid var(--line); }
+.station-ticket { min-width: 0; min-height: 62px; padding-inline: 5px; border-bottom: 0; }
+.paged-tickets .station-ticket-row { height: 68px; }
+.station-advance { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--blue); background: var(--surface); transition: background-color 140ms ease-out, border-color 140ms ease-out, color 140ms ease-out; }
+.station-advance:hover { border-color: var(--blue); color: var(--ink); background: var(--blue-soft); }
+.station-advance:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.station-advance svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .station-ticket:hover { border-radius: 6px; }
 .station-ticket-copy strong { font-size: 13px; }
 .station-pagination { min-height: 50px; }
@@ -80,5 +85,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .station-page-button,.washline-heading .button-primary { transition: none; }
+  .station-page-button,.station-advance,.washline-heading .button-primary { transition: none; }
 }
+
