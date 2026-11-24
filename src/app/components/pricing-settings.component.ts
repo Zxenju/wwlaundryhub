@@ -19,9 +19,36 @@ export class PricingSettingsComponent implements OnChanges {
     { value: 'per-load', label: 'Per load' },
     { value: 'flat', label: 'Flat amount' },
   ];
+  protected readonly promoLabelOptions = [
+    'Promo Rate',
+    'Special Promo',
+    'Student Promo',
+    'Seasonal Promo',
+    'Shop Sign Rate',
+  ];
+  protected readonly customPromoLabels = new Set<string>();
 
   ngOnChanges(): void {
-    if (this.config) this.draft = structuredClone(this.config);
+    if (this.config) {
+      this.draft = structuredClone(this.config);
+      this.customPromoLabels.clear();
+    }
+  }
+
+  protected selectedPromoLabel(serviceId: string, label: string): string {
+    return this.customPromoLabels.has(serviceId) || !this.promoLabelOptions.includes(label)
+      ? 'custom'
+      : label;
+  }
+
+  protected setPromoLabel(service: PricingConfig['services'][number], value: string): void {
+    if (value === 'custom') {
+      this.customPromoLabels.add(service.id);
+      return;
+    }
+
+    this.customPromoLabels.delete(service.id);
+    service.promoLabel = value;
   }
 
   protected get valid(): boolean {
@@ -43,3 +70,4 @@ export class PricingSettingsComponent implements OnChanges {
     this.saveConfig.emit(structuredClone(this.draft));
   }
 }
+
