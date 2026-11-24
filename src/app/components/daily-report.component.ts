@@ -156,6 +156,52 @@ export class DailyReportComponent {
     return Math.max(1, ...this.trendPoints.map((point) => point.collections));
   }
 
+  protected trendX(index: number): number {
+    const count = this.trendPoints.length;
+    return count <= 1 ? 341 : 70 + (558 * index) / (count - 1);
+  }
+
+  protected trendTicks(metric: 'bookings' | 'collections'): number[] {
+    const maximum = metric === 'bookings' ? this.maxTrendBookings : this.maxTrendCollections;
+    const roughStep = maximum / 4;
+    const magnitude = 10 ** Math.floor(Math.log10(Math.max(roughStep, 1)));
+    const normalized = roughStep / magnitude;
+    const niceStep = (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10) * magnitude;
+    const ceiling = Math.max(niceStep, Math.ceil(maximum / niceStep) * niceStep);
+    return Array.from({ length: Math.round(ceiling / niceStep) + 1 }, (_, index) => index * niceStep);
+  }
+
+  protected trendY(value: number, metric: 'bookings' | 'collections'): number {
+    const ticks = this.trendTicks(metric);
+    const ceiling = ticks[ticks.length - 1] || 1;
+    return 174 - (value / ceiling) * 128;
+  }
+
+  protected trendPointLabelY(value: number, metric: 'bookings' | 'collections'): number {
+    return Math.max(35, this.trendY(value, metric) - 10);
+  }
+
+  protected trendLinePath(metric: 'bookings' | 'collections'): string {
+    return this.trendPoints.map((point, index) => {
+      const value = metric === 'bookings' ? point.bookings : point.collections;
+      return `${index === 0 ? 'M' : 'L'} ${this.trendX(index)} ${this.trendY(value, metric)}`;
+    }).join(' ');
+  }
+
+  protected trendAreaPath(metric: 'bookings' | 'collections'): string {
+    const points = this.trendPoints.map((point, index) => {
+      const value = metric === 'bookings' ? point.bookings : point.collections;
+      return `${this.trendX(index)} ${this.trendY(value, metric)}`;
+    });
+    if (!points.length) return '';
+    return `M ${this.trendX(0)} 174 L ${points.join(' L ')} L ${this.trendX(points.length - 1)} 174 Z`;
+  }
+
+  protected trendDescription(metric: 'bookings' | 'collections'): string {
+    const label = metric === 'bookings' ? 'Bookings' : 'Payments collected';
+    return `${label}: ${this.trendPoints.map((point) => `${point.label}, ${metric === 'bookings' ? point.bookings : point.collections}`).join('; ')}`;
+  }
+
   get trendWindowLabel(): string {
     return this.rangeLengthDays > 365
       ? 'Latest 12 months of selected period'
@@ -298,3 +344,4 @@ export class DailyReportComponent {
     return `"${safe.replaceAll('"', '""')}"`;
   }
 }
+
