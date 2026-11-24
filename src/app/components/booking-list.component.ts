@@ -21,6 +21,8 @@ export class BookingListComponent {
 
   protected search = '';
   protected statusFilter: BookingStatus | 'All' = 'All';
+  protected currentPage = 1;
+  protected readonly pageSize = 10;
   protected readonly statuses: BookingStatus[] = [
     'Received',
     'Washing',
@@ -39,6 +41,45 @@ export class BookingListComponent {
       const matchesStatus = this.statusFilter === 'All' || booking.status === this.statusFilter;
       return matchesQuery && matchesStatus;
     });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredBookings.length / this.pageSize));
+  }
+
+  get pageIndex(): number {
+    return Math.min(this.currentPage, this.totalPages);
+  }
+
+  get pageBookings(): Booking[] {
+    const start = (this.pageIndex - 1) * this.pageSize;
+    return this.filteredBookings.slice(start, start + this.pageSize);
+  }
+
+  get firstVisibleBooking(): number {
+    return this.filteredBookings.length ? (this.pageIndex - 1) * this.pageSize + 1 : 0;
+  }
+
+  get lastVisibleBooking(): number {
+    return Math.min(this.pageIndex * this.pageSize, this.filteredBookings.length);
+  }
+
+  protected setSearch(value: string): void {
+    this.search = value;
+    this.currentPage = 1;
+  }
+
+  protected setStatusFilter(status: BookingStatus | 'All'): void {
+    this.statusFilter = status;
+    this.currentPage = 1;
+  }
+
+  protected previousPage(): void {
+    this.currentPage = Math.max(1, this.pageIndex - 1);
+  }
+
+  protected nextPage(): void {
+    this.currentPage = Math.min(this.totalPages, this.pageIndex + 1);
   }
 
   get hasPricedBookings(): boolean {
@@ -60,3 +101,4 @@ export class BookingListComponent {
   }
 
 }
+
