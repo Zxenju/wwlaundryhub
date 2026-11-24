@@ -130,6 +130,7 @@
             (showPricing)="selectView('pricing')"
             (newBooking)="openNewBooking()"
             (selectBooking)="selectBooking($event)"
+            (changeStatus)="changeStatus($event)"
           />
         }
         @case ('bookings') {
@@ -183,3 +184,4 @@
     }
   </main>
 </div>
+
