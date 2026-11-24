@@ -54,24 +54,33 @@
             @if (stationBookings(station.status).length) {
               <div class="station-tickets" [class.pickup-tickets]="station.icon === 'pickup'" [class.paged-tickets]="countAt(station.status) > 3">
                 @for (booking of stationBookings(station.status); track booking.id) {
-                  <button class="station-ticket" type="button" (click)="selectBooking.emit(booking)"
-                    [attr.aria-label]="'Open ' + station.status + ' booking for ' + booking.customerName">
-                    <svg class="ticket-station-icon" [class.ticket-intake]="station.icon === 'intake'"
-                      [class.ticket-washer]="station.icon === 'washer'" [class.ticket-drying]="station.icon === 'drying'"
-                      [class.ticket-pickup]="station.icon === 'pickup'" viewBox="0 0 24 24" aria-hidden="true">
-                      @switch (station.icon) {
-                        @case ('intake') { <path d="M3 11h18l-2 9H5l-2-9Z"/><path d="m4 11 3-6 5 2 3-3 5 7M8 15v2m8-2v2"/> }
-                        @case ('washer') { <rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 7h16"/><circle cx="12" cy="14" r="4.5"/><path d="M9 15c1.5-2 4-3 6-2"/> }
-                        @case ('drying') { <path d="M3 5h18M6 5l1 16m11-16-1 16M7 10h10"/><path d="m10 11 2-1 2 1 2-1 2 2-2 2v5h-6v-5l-2-2 2-2Z"/> }
-                        @case ('pickup') { <path d="M3 5h18M12 10V8.5a2.5 2.5 0 1 0-2.5-2.5M12 10 4 16a1.7 1.7 0 0 0 1 3h14a1.7 1.7 0 0 0 1-3l-8-6Z"/> }
-                      }
-                    </svg>
-                    <span class="station-ticket-copy">
-                      <strong>{{ booking.customerName }}</strong>
-                      <span>{{ booking.charge.serviceName }} · {{ booking.weightKg }} kg</span>
-                      <small>Pickup {{ booking.pickupDate | date: 'MMM d' }} · {{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</small>
-                    </span>
-                  </button>
+                  <div class="station-ticket-row">
+                    <button class="station-ticket" type="button" (click)="selectBooking.emit(booking)"
+                      [attr.aria-label]="'Open ' + station.status + ' booking for ' + booking.customerName">
+                      <svg class="ticket-station-icon" [class.ticket-intake]="station.icon === 'intake'"
+                        [class.ticket-washer]="station.icon === 'washer'" [class.ticket-drying]="station.icon === 'drying'"
+                        [class.ticket-pickup]="station.icon === 'pickup'" viewBox="0 0 24 24" aria-hidden="true">
+                        @switch (station.icon) {
+                          @case ('intake') { <path d="M3 11h18l-2 9H5l-2-9Z"/><path d="m4 11 3-6 5 2 3-3 5 7M8 15v2m8-2v2"/> }
+                          @case ('washer') { <rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 7h16"/><circle cx="12" cy="14" r="4.5"/><path d="M9 15c1.5-2 4-3 6-2"/> }
+                          @case ('drying') { <path d="M3 5h18M6 5l1 16m11-16-1 16M7 10h10"/><path d="m10 11 2-1 2 1 2-1 2 2-2 2v5h-6v-5l-2-2 2-2Z"/> }
+                          @case ('pickup') { <path d="M3 5h18M12 10V8.5a2.5 2.5 0 1 0-2.5-2.5M12 10 4 16a1.7 1.7 0 0 0 1 3h14a1.7 1.7 0 0 0 1-3l-8-6Z"/> }
+                        }
+                      </svg>
+                      <span class="station-ticket-copy">
+                        <strong>{{ booking.customerName }}</strong>
+                        <span>{{ booking.charge.serviceName }} · {{ booking.weightKg }} kg</span>
+                        <small>Pickup {{ booking.pickupDate | date: 'MMM d' }} · {{ booking.charge.totalAmount | currency: 'PHP' : 'symbol' : '1.2-2' }}</small>
+                      </span>
+                    </button>
+                    @if (nextStationStatus(booking.status); as nextStatus) {
+                      <button class="station-advance" type="button" [title]="'Move to ' + nextStatus"
+                        [attr.aria-label]="'Move ' + booking.customerName + ' to ' + nextStatus"
+                        (click)="advanceBooking(booking)">
+                        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 10h12m-5-5 5 5-5 5" /></svg>
+                      </button>
+                    }
+                  </div>
                 }
               </div>
               @if (countAt(station.status) > 3) {
@@ -125,3 +134,4 @@
     <p class="revenue-note">Recorded today: <strong>{{ todayRevenue | currency: 'PHP' : 'symbol' : '1.2-2' }}</strong></p>
   }
 </div>
+
