@@ -81,27 +81,43 @@
       <div class="trend-grid">
         <section class="trend-chart" aria-labelledby="booking-trend-title">
           <h4 id="booking-trend-title">Bookings</h4>
-          <div class="trend-bars booking-bars" role="img" [attr.aria-label]="'Booking count trend: ' + trendPoints.length + ' time periods'">
-            @for (point of trendPoints; track point.start) {
-              <div class="trend-column" [attr.title]="point.label + ': ' + point.bookings + ' bookings'">
-                <span class="trend-value">{{ point.bookings }}</span>
-                <span class="trend-bar-track"><span class="trend-bar" [style.height.%]="point.bookings / maxTrendBookings * 100"></span></span>
-                <span class="trend-label">{{ point.label }}</span>
-              </div>
+          <svg class="trend-svg booking-trend" viewBox="0 0 640 240" role="img"
+            [attr.aria-label]="trendDescription('bookings')" focusable="false">
+            <g class="chart-grid" aria-hidden="true">
+              @for (tick of trendTicks('bookings'); track tick) {
+                <line x1="54" [attr.y1]="trendY(tick, 'bookings')" x2="628" [attr.y2]="trendY(tick, 'bookings')" />
+                <text class="chart-axis-label" x="44" [attr.y]="trendY(tick, 'bookings')" text-anchor="end" dominant-baseline="middle">{{ tick }}</text>
+              }
+            </g>
+            <path class="chart-area" [attr.d]="trendAreaPath('bookings')" aria-hidden="true" />
+            <path class="chart-line" [attr.d]="trendLinePath('bookings')" aria-hidden="true" />
+            @for (point of trendPoints; track point.start; let index = $index) {
+              <g [attr.aria-label]="point.label + ': ' + point.bookings + ' bookings'">
+                <text class="chart-value-label" [attr.x]="trendX(index)" [attr.y]="trendPointLabelY(point.bookings, 'bookings')" text-anchor="middle">{{ point.bookings }}</text>
+                <text class="chart-axis-label" [attr.x]="trendX(index)" y="215" text-anchor="middle">{{ point.label }}</text>
+              </g>
             }
-          </div>
+          </svg>
         </section>
         <section class="trend-chart" aria-labelledby="collection-trend-title">
           <h4 id="collection-trend-title">Payments collected</h4>
-          <div class="trend-bars collection-bars" role="img" [attr.aria-label]="'Payments collected trend: ' + trendPoints.length + ' time periods'">
-            @for (point of trendPoints; track point.start) {
-              <div class="trend-column" [attr.title]="point.label + ': ' + (point.collections | currency: 'PHP' : 'symbol' : '1.2-2')">
-                <span class="trend-value">{{ point.collections | currency: 'PHP' : 'symbol' : '1.0-0' }}</span>
-                <span class="trend-bar-track"><span class="trend-bar" [style.height.%]="point.collections / maxTrendCollections * 100"></span></span>
-                <span class="trend-label">{{ point.label }}</span>
-              </div>
+          <svg class="trend-svg collection-trend" viewBox="0 0 640 240" role="img"
+            [attr.aria-label]="trendDescription('collections')" focusable="false">
+            <g class="chart-grid" aria-hidden="true">
+              @for (tick of trendTicks('collections'); track tick) {
+                <line x1="70" [attr.y1]="trendY(tick, 'collections')" x2="628" [attr.y2]="trendY(tick, 'collections')" />
+                <text class="chart-axis-label" x="62" [attr.y]="trendY(tick, 'collections')" text-anchor="end" dominant-baseline="middle">{{ tick | currency: 'PHP' : 'symbol' : '1.0-0' }}</text>
+              }
+            </g>
+            <path class="chart-area" [attr.d]="trendAreaPath('collections')" aria-hidden="true" />
+            <path class="chart-line" [attr.d]="trendLinePath('collections')" aria-hidden="true" />
+            @for (point of trendPoints; track point.start; let index = $index) {
+              <g [attr.aria-label]="point.label + ': ' + (point.collections | currency: 'PHP' : 'symbol' : '1.2-2')">
+                <text class="chart-value-label" [attr.x]="trendX(index)" [attr.y]="trendPointLabelY(point.collections, 'collections')" text-anchor="middle">{{ point.collections | currency: 'PHP' : 'symbol' : '1.0-0' }}</text>
+                <text class="chart-axis-label" [attr.x]="trendX(index)" y="215" text-anchor="middle">{{ point.label }}</text>
+              </g>
             }
-          </div>
+          </svg>
         </section>
       </div>
     </section>
@@ -224,3 +240,4 @@
     }
   </section>
 </div>
+
